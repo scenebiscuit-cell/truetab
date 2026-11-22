@@ -12,8 +12,12 @@ Help people in Austin find the best meal for their money at any budget, from a $
   *Check:* open `index.html`; set 2 adults, 2 kids, $0–40, any way to order; spots that fit show a green tag, and each card says where its portions came from. `npm test` passes.
 - [ ] **M1b Filters, deals and dine-in.** Cuisine checkboxes (remembered), diet tags (as menus state them, never an allergy promise), budget range, day and time picker, time-aware deals (set price, percent off, dollars off, kids eat free), dine-in as a way to order, weekly source checklist (`check.html`).
   *Check:* set Tuesday noon, pickup, 1 adult: Sol y Masa shows "Taco Tuesday" and how much it saves. Set Monday 6 pm, dine-in, 2 adults + 2 kids: Smash Alley shows kids eat free. Untick every cuisine but Thai and Indian: only those two remain.
-- [ ] **M2 First real data.** One Austin neighborhood, 10–20 restaurants, collected by hand per `docs/DATA.md`, including each restaurant's sources and any deals.
-  *Check:* `meta.isSample` is false, the sample notice is gone, every deal has a source and a verified date.
+- [ ] **M2 First real data: 78745.** Started 2026-11-22 with 6 restaurants (El Chilito, Evangeline Cafe, Moreno Burger Co., Somos, Me Con Bistro, Super Bowl) from their own websites and Toast pages; the page now loads `data/austin-78745.js` (sample data stays for tests). Still to do: Nick verifies each one (`verifiedBy`), adds Instagram/Facebook links and hours where missing, and grows the list to 10–20. Candidates whose online menus had no prices or wouldn't load: Nasha South, Polvos truck, Tacos Las Amazonas #3, Umi Sushi, Pizzeria Grata.
+  *Check:* every restaurant has `verifiedBy: "nick"`, and every deal has a source and a verified date.
+- [ ] **M2b Delivery app estimator.** Built: DoorDash and Uber Eats menu prices are estimated as the restaurant's price plus an adjustable markup (default 20%), then typical fees are added; shown only for apps a restaurant is known to be on, and always labeled "est.". Next: check one real checkout per app from a fixed 78745 address and tune the fee defaults; add `onApps` as you confirm which apps each spot uses.
+  *Check:* for 3 restaurants, the estimate lands within about 10% of a real app checkout.
+- [ ] **M2c Reviews side by side.** Built: each card links to the restaurant's Google, Yelp and Tripadvisor pages. Next: show live star ratings and review counts side by side through a small Cloudflare Worker (like Pharos's) calling each site's official API with its required branding and caching limits. Google Places API (usage-based billing), Yelp Fusion API (paid plans only), Tripadvisor Content API (apply for access). Ratings are never copied into the data files.
+  *Check:* a card shows three ratings, each with its site's logo and a link, and the data files still contain no ratings.
 - [ ] **M3 Go live.** Publish on GitHub Pages; add the portfolio card; share the first "biggest gap" post.
   *Check:* the live link works on a phone.
 - [ ] **M4 AI-assisted entry.** Paste a menu, caption or screenshot you found; AI turns it into prices or a deal in the data format; Nick approves each one before it's saved, with the source link and date.
@@ -43,6 +47,13 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Diet tags are what the menu says. The page tells people to confirm allergies with the restaurant.
 - 2026-11-22: Budget minimum hides spots under it and says how many were hidden.
 - 2026-11-22: Working name "Menu Math", repo `menu-math`. Not final.
+- 2026-11-22: Real data starts in 78745. Prices come only from restaurants' own websites and Toast ordering pages. Menus that don't list prices are left out, never guessed.
+- 2026-11-22: Family meals that say "feeds 4–6" count as 4 (the low end), with the menu's wording kept in a note.
+- 2026-11-22: Kids-only items (kids' meals) are used one per kid when that's cheaper, and never count toward feeding adults.
+- 2026-11-22: Restaurant-specific charges the menu states are included: Moreno's 3% card surcharge, Evangeline's 40¢ per-item to-go container fee.
+- 2026-11-22: App markup default 20%, based on a 2023 industry study (average app premium about 20%; quick-service 26%, casual dining 11%). Adjustable on the page.
+- 2026-11-22: Ratings aren't stored (Google, Yelp and Tripadvisor terms). "Best value" sorting is hidden until live ratings exist; results sort by price.
+- 2026-11-22: Restaurants are hidden when closed at the chosen time; ones without hours on file are shown.
 
 ## Money ideas (not built)
 

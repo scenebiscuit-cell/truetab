@@ -15,6 +15,11 @@
     const override = (restaurant.channelFees && restaurant.channelFees[channel.id]) || {};
     if (override.available === false) return null;
     if (channel.requiresOptIn && override.available !== true) return null;
+    if (channel.requiresApp) {
+      const listed = (restaurant.onApps || []).includes(channel.id) ||
+        restaurant.items.some((i) => typeof (i.prices || {})[channel.priceKey] === "number");
+      if (!listed) return null;
+    }
     return Object.assign({}, channel, override);
   }
 
@@ -26,7 +31,9 @@
 
   // What you actually pay: menu subtotal + delivery fee + service fee + small-order fee + tax + tip.
   // Assumptions (see docs/DATA.md): tax is on the food subtotal only; tip is a share of the subtotal.
-  function allInPrice(subtotal, channel, taxRate, tipPct) {
+  // extras (optional): { surchargePct, toGoFee, itemCount } for restaurant-level charges.
+  function allInPrice(subtotal, channel, taxRate, tipPct, extras) {
+    const x = extras || {};
     const tipShare = typeof tipPct === "number" ? tipPct : channel.defaultTipPct || 0;
     const deliveryFee = channel.deliveryFee || 0;
     const serviceFee = channel.serviceFeePct
@@ -44,7 +51,9 @@
       tax: cents(tax),
       tip: cents(tip)
     };
-    parts.fees = cents(parts.deliveryFee + parts.serviceFee + parts.smallOrderFee);
+    parts.cardSurcharge = cents(x.surchargePct ? subtotal * x.surchargePct : 0);
+    parts.toGoFee = cents(x.toGoFee ? x.toGoFee * (x.itemCount || 0) : 0);
+    parts.fees = cents(parts.deliveryFee + parts.serviceFee + parts.smallOrderFee + parts.cardSurcharge + parts.toGoFee);
     parts.total = cents(parts.subtotal + parts.fees + parts.tax + parts.tip);
     return parts;
   }
@@ -142,7 +151,8 @@
         unitPrice: options[i].price,
         lineTotal: cents(options[i].price * qty),
         servesEach: options[i].serves,
-        deal: options[i].item.deal || null
+        deal: options[i].item.deal || null,
+        estimated: !!options[i].item.estimatedPrice
       }))
       .sort((a, b) => b.lineTotal - a.lineTotal);
     return { lines, subtotal: cents(best[bestS]), portions: Math.round((bestS / RES) * 100) / 100 };
@@ -150,7 +160,7 @@
 
   // How sure we are about an order overall: the weakest source among its lines.
   function orderConfidence(lines) {
-    const rank = { restaurant: 3, reports: 2, estimate: 1, none: 0 };
+    const rank = { restaurant: 3, kids: 3, reports: 2, estimate: 1, none: 0 };
     let low = "restaurant";
     for (const l of lines) if (rank[l.servesEach.source] < rank[low]) low = l.servesEach.source;
     return low;
@@ -222,6 +232,64 @@
     });
   }
 
+  /* ---------- Hours, app prices, kids' meals ---------- */
+
+  // Open at this day and time? Restaurants without hours on file count as open.
+  function isOpen(restaurant, when) {
+    if (!when || !restaurant.hours) return true;
+    const spans = restaurant.hours[when.day];
+    if (!spans) return true;
+    return spans.some(([s, e]) => when.minutes >= toMinutes(s) && when.minutes < toMinutes(e));
+  }
+
+  // For apps with no collected prices: estimate each item as restaurant price x (1 + markup).
+  function itemsForChannel(items, channel, markupPct) {
+    if (!channel.estimateFromDirect) return items;
+    return items.map((item) => {
+      const p = item.prices || {};
+      if (typeof p[channel.priceKey] === "number" || typeof p.direct !== "number") return item;
+      return Object.assign({}, item, {
+        prices: Object.assign({}, p, { [channel.priceKey]: cents(p.direct * (1 + markupPct)) }),
+        estimatedPrice: true
+      });
+    });
+  }
+
+  /*
+   * Cheapest way to feed the group, trying two plans and keeping the cheaper:
+   * A) everyone eats from the regular menu; B) each kid gets the cheapest kids' meal
+   * and the adults eat from the regular menu. Kids-only items never feed adults.
+   */
+  function bestOrder(restaurant, items, channel, adults, kids, appetite, dishTypes) {
+    const adultItems = items.filter((i) => !i.kidsOnly);
+    const kidItems = items.filter((i) => i.kidsOnly && itemPrice(i, channel) !== null);
+    const forAdults = Object.assign({}, restaurant, { items: adultItems });
+    const total = partyPortions(adults, kids, appetite);
+    const a = total > 0 ? cheapestOrder(forAdults, channel, total, dishTypes) : null;
+    let b = null;
+    if (kids > 0 && kidItems.length) {
+      const k = kidItems.slice().sort((x, y) => itemPrice(x, channel) - itemPrice(y, channel))[0];
+      const adultPart = adults > 0
+        ? cheapestOrder(forAdults, channel, adults * appetite.adult, dishTypes)
+        : { lines: [], subtotal: 0, portions: 0 };
+      if (adultPart) {
+        const kp = itemPrice(k, channel);
+        const line = {
+          itemId: k.id, name: k.name, qty: kids, unitPrice: kp, lineTotal: cents(kp * kids),
+          servesEach: { serves: appetite.kid, source: "kids", label: "Kids' meal, one per kid" },
+          deal: k.deal || null, estimated: !!k.estimatedPrice
+        };
+        b = {
+          lines: adultPart.lines.concat([line]),
+          subtotal: cents(adultPart.subtotal + kp * kids),
+          portions: Math.round((adultPart.portions + kids * appetite.kid) * 100) / 100
+        };
+      }
+    }
+    if (a && b) return b.subtotal < a.subtotal - 1e-9 ? b : a;
+    return a || b;
+  }
+
   /* ---------- Filters ---------- */
 
   // Items allowed by the diet filter: an item must carry every tag asked for.
@@ -249,19 +317,28 @@
     const people = adults + kids;
     const results = [];
     let hiddenBelow = 0;
+    const markupPct = typeof query.markupPct === "number" ? query.markupPct
+      : typeof data.defaultMarkupPct === "number" ? data.defaultMarkupPct : 0.2;
+    let closedNow = 0;
     for (const r of data.restaurants) {
       if (!cuisineAllowed(r, query.cuisines)) continue;
+      if (!isOpen(r, query.when)) { closedNow++; continue; }
       const allowedItems = dietItems(r.items, query.diet);
       const options = [];
       for (const base of data.channels) {
         if (!modeAllows(query.mode, base.kind)) continue;
         const ch = channelFor(r, base);
         if (!ch) continue;
-        const plain = Object.assign({}, r, { items: allowedItems });
-        const baseOrder = cheapestOrder(plain, ch, portions, data.dishTypes);
+        const chItems = itemsForChannel(allowedItems, ch, markupPct);
+        const baseOrder = bestOrder(r, chItems, ch, adults, kids, appetite, data.dishTypes);
         if (!baseOrder) continue;
         const tip = ch.kind === "pickup" ? 0 : query.tipPct;
-        const basePrice = allInPrice(baseOrder.subtotal, ch, data.taxRate, tip);
+        const extrasFor = (order) => ({
+          surchargePct: ch.priceKey === "direct" ? r.cardSurchargePct || 0 : 0,
+          toGoFee: ch.kind === "pickup" || ch.id === "direct" ? r.toGoItemFee || 0 : 0,
+          itemCount: order.lines.reduce((n, l) => n + l.qty, 0)
+        });
+        const basePrice = allInPrice(baseOrder.subtotal, ch, data.taxRate, tip, extrasFor(baseOrder));
 
         // Try again with any deals running right now.
         let order = baseOrder;
@@ -272,11 +349,10 @@
         if (deals.length) {
           const kidsDeal = deals.find((d) => d.type === "kids-free");
           freeKids = kidsDeal && adults > 0 ? Math.min(kids, adults * (kidsDeal.perAdult || 1)) : 0;
-          const paidPortions = portions - freeKids * appetite.kid;
-          const dealItems = itemsWithDeals(allowedItems, deals, ch.priceKey);
-          const dealOrder = cheapestOrder(Object.assign({}, r, { items: dealItems }), ch, paidPortions, data.dishTypes);
+          const dealItems = itemsWithDeals(chItems, deals, ch.priceKey);
+          const dealOrder = bestOrder(r, dealItems, ch, adults, kids - freeKids, appetite, data.dishTypes);
           if (dealOrder) {
-            const dealPrice = allInPrice(dealOrder.subtotal, ch, data.taxRate, tip);
+            const dealPrice = allInPrice(dealOrder.subtotal, ch, data.taxRate, tip, extrasFor(dealOrder));
             if (dealPrice.total < basePrice.total - 0.005) {
               order = dealOrder;
               price = dealPrice;
@@ -297,9 +373,11 @@
           price,
           perPerson: people ? cents(price.total / people) : price.total,
           confidence: orderConfidence(order.lines),
-          deals: usedDeals.map((d) => ({ id: d.id, title: d.title })),
+          deals: usedDeals.map((d) => ({ id: d.id, title: d.title, note: d.note || null })),
           freeKids,
-          savings: cents(basePrice.total - price.total)
+          savings: cents(basePrice.total - price.total),
+          estimated: order.lines.some((l) => l.estimated),
+          markupPct: ch.estimateFromDirect ? markupPct : null
         });
       }
       if (!options.length) continue;
@@ -320,10 +398,10 @@
     const order = { fits: 0, "just-over": 1, over: 2 };
     results.sort((a, b) => {
       if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
-      if (query.sort === "cheapest") return a.best.price.total - b.best.price.total;
+      if (query.sort === "cheapest" || a.value == null || b.value == null) return a.best.price.total - b.best.price.total;
       return b.value - a.value;
     });
-    return { portions, people, results, hiddenBelow };
+    return { portions, people, results, hiddenBelow, closedNow };
   }
 
   function modeAllows(mode, kind) {
@@ -337,7 +415,8 @@
    * divided by the cost per person, times 10 to make a readable number. A higher score is better.
    */
   function valueScore(rating, perPerson) {
-    if (!rating || !perPerson) return 0;
+    if (!rating || typeof rating.stars !== "number") return null;
+    if (!perPerson) return 0;
     return Math.round((Math.max(0, rating.stars - 3) / perPerson) * 1000) / 100;
   }
 
@@ -390,6 +469,9 @@
     budgetStatus,
     valueScore,
     toMinutes,
+    isOpen,
+    itemsForChannel,
+    bestOrder,
     activeDeals,
     itemsWithDeals,
     dietItems,

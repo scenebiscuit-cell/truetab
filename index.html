@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="src/styles.css?v=2026-11-22b">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-22c">
   <script>
     // Pick the theme before the page paints, so it never flashes the wrong one.
     (function () {
@@ -31,10 +31,10 @@
 
   <main id="main">
     <section class="hero wrap">
-      <p class="eyebrow">Austin · pickup vs. delivery</p>
+      <p class="eyebrow" id="area-label">Austin 78745 · dine-in, pickup, delivery</p>
       <h1>What does your budget <span class="mark">actually</span> get you?</h1>
       <p class="lead">Set a budget and who you're feeding. Menu Math finds the cheapest way to feed everyone at each spot, with delivery fees, service fees, tax and tip already counted.</p>
-      <p class="notice" role="note"><strong>Sample data.</strong> The restaurants, prices, fees and ratings below are invented to test the idea. Real Austin data comes next.</p>
+      <p class="notice" role="note" id="data-notice"><strong>Real 78745 menu prices</strong>, copied from each restaurant's own website or ordering page on Nov 22, 2026. DoorDash and Uber Eats prices aren't collected: they're <strong>estimated</strong> from the restaurant's price plus a typical app markup and typical fees. Check the restaurant before you go.</p>
     </section>
 
     <div class="wrap tabs" role="tablist" aria-label="Views">
@@ -109,6 +109,18 @@
           </select>
           <p class="help">Dine-in and delivery. Pickup has none.</p>
         </div>
+        <div class="field">
+          <label for="markup">App menu markup</label>
+          <select id="markup" name="markup">
+            <option value="0">0% (same as restaurant)</option>
+            <option value="0.1">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.2" selected>20% (typical)</option>
+            <option value="0.25">25%</option>
+            <option value="0.3">30%</option>
+          </select>
+          <p class="help">How much higher DoorDash and Uber Eats menu prices are assumed to be.</p>
+        </div>
 
         <fieldset class="field wide checks" id="cuisine-field">
           <legend>Cuisines</legend>
@@ -160,7 +172,9 @@
       <ul>
         <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
         <li><strong>Portions</strong> come from what the restaurant says first, then customer reports, then a typical amount for that kind of dish. Every card says which one it used.</li>
-        <li><strong>Prices are estimates.</strong> Delivery fees change with distance, time and promotions, so your checkout may differ by a dollar or two.</li>
+        <li><strong>Restaurant prices are real</strong>, from each restaurant's own menu or ordering page, with the date they were checked. Restaurant-specific charges, like a card surcharge or a to-go container fee, are included when the menu states them.</li>
+        <li><strong>App prices are estimates.</strong> Restaurants often price items higher on DoorDash and Uber Eats; an industry study put the average near 20%. Menu Math adds your chosen markup and typical fees. Real fees change with distance, time and promotions.</li>
+        <li><strong>Reviews</strong> link to each restaurant's Google, Yelp and Tripadvisor pages side by side. Live star ratings are planned.</li>
         <li><strong>Deals</strong> count only on the days, hours and ways to order they apply to. Menu Math works out the order with and without the deal and keeps the cheaper one.</li>
         <li><strong>Best value</strong> compares rating to cost per person. A 3-star place adds no value; each star above that does.</li>
       </ul>
@@ -169,12 +183,12 @@
 
   <footer class="foot">
     <div class="wrap">
-      <p>Created by Nick Lax · Prototype with sample data · Not affiliated with any delivery app · <a href="check.html">Data checklist</a></p>
+      <p>Created by Nick Lax · Real 78745 menu data, checked Nov 22, 2026 · Not affiliated with any delivery app · <a href="check.html">Data checklist</a></p>
     </div>
   </footer>
 
-  <script src="data/sample-data.js?v=2026-11-22b"></script>
-  <script src="src/engine.js?v=2026-11-22b"></script>
-  <script src="src/app.js?v=2026-11-22b"></script>
+  <script src="data/austin-78745.js?v=2026-11-22c"></script>
+  <script src="src/engine.js?v=2026-11-22c"></script>
+  <script src="src/app.js?v=2026-11-22c"></script>
 </body>
 </html>

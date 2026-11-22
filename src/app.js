@@ -72,6 +72,13 @@
   selectTab(0);
 
   /* ---------- Feed my group ---------- */
+  const hasRatings = data.restaurants.some((r) => r.rating && typeof r.rating.stars === "number");
+  if (!hasRatings) {
+    const sortSel = $("sort");
+    sortSel.querySelector('option[value="value"]').remove();
+    sortSel.value = "cheapest";
+    sortSel.closest(".field").append(el("p", { class: "help" }, "Best value returns once ratings are added."));
+  }
   /* Cuisine and diet checkboxes. Hidden cuisines are remembered on this device. */
   const CUISINE_KEY = "menu-math-hidden-cuisines";
   const allCuisines = [...new Set(data.restaurants.flatMap((r) => r.cuisines || []))].sort();
@@ -131,6 +138,7 @@
       diet: checked(dietList),
       sort: $("sort").value,
       tipPct: parseFloat($("tip").value),
+      markupPct: parseFloat($("markup").value),
       when: readWhen()
     };
   }
@@ -156,7 +164,8 @@
       ...(range
         ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spots fit ${range} all-in.`]
         : [`${out.results.length} spots.`]),
-      out.hiddenBelow ? ` ${out.hiddenBelow} cheaper spot${out.hiddenBelow === 1 ? "" : "s"} hidden by your minimum.` : ""
+      out.hiddenBelow ? ` ${out.hiddenBelow} cheaper spot${out.hiddenBelow === 1 ? "" : "s"} hidden by your minimum.` : "",
+      out.closedNow ? ` ${out.closedNow} closed then.` : ""
     );
     if (!out.results.length) {
       const why = q.cuisines.length === 0 ? "No cuisines are selected." : "Nothing matches.";
@@ -176,7 +185,7 @@
           el("span", {}, `${l.qty} × ${l.name}`),
           el("span", { class: "num" },
             l.deal ? el("span", { class: "was" }, money(l.deal.was * l.qty)) : null,
-            money(l.lineTotal)),
+            (l.estimated ? "est. " : "") + money(l.lineTotal)),
           el("span", { class: `src src-${l.servesEach.source}` }, l.servesEach.label)
         )
       )
@@ -187,6 +196,8 @@
       p.deliveryFee ? ["Delivery fee", p.deliveryFee] : null,
       p.serviceFee ? ["Service fee", p.serviceFee] : null,
       p.smallOrderFee ? ["Small-order fee", p.smallOrderFee] : null,
+      p.cardSurcharge ? ["Card surcharge (restaurant's)", p.cardSurcharge] : null,
+      p.toGoFee ? ["To-go container fee (restaurant's)", p.toGoFee] : null,
       ["Tax", p.tax],
       p.tip ? ["Tip", p.tip] : null
     ].filter(Boolean);
@@ -197,7 +208,10 @@
           rows.map(([k, v]) => el("tr", {}, el("td", {}, k), el("td", {}, money(v)))),
           el("tr", { class: "total" }, el("td", {}, "Estimated total"), el("td", {}, money(p.total)))
         )
-      )
+      ),
+      b.estimated
+        ? el("p", { class: "help" }, `${b.channelLabel} menu prices are estimated at ${Math.round(b.markupPct * 100)}% above the restaurant's own prices. Fees are typical values, not a quote.`)
+        : null
     );
     const channels = el("details", {},
       el("summary", {}, `Compare ${r.options.length} way${r.options.length === 1 ? "" : "s"} to order`),
@@ -206,7 +220,7 @@
         el("tbody", {},
           r.options.map((o, i) =>
             el("tr", { class: i === 0 ? "cheapest" : null },
-              el("td", {}, o.channelLabel + (o.deals.length ? " (with deal)" : "") + (i === 0 ? " (cheapest)" : "")),
+              el("td", {}, o.channelLabel + (o.estimated ? " (estimated)" : "") + (o.deals.length ? " (with deal)" : "") + (i === 0 ? " (cheapest)" : "")),
               el("td", {}, money(o.price.total)))
           )
         )
@@ -219,7 +233,10 @@
           topPick ? el("p", { class: "label" }, "Top pick") : null,
           el("h3", {}, r.restaurant.name),
           el("p", { class: "meta" },
-            `${r.restaurant.neighborhood} · ${rating.stars.toFixed(1)} stars (${rating.count.toLocaleString()} ${rating.source} ratings)`)
+            r.restaurant.neighborhood,
+            rating && typeof rating.stars === "number"
+              ? ` · ${rating.stars.toFixed(1)} stars (${rating.count.toLocaleString()} ${rating.source} ratings)` : "",
+            r.restaurant.address ? el("span", { class: "addr" }, r.restaurant.address) : null)
         ),
         el("span", { class: `tag ${st.cls}` }, st.text)
       ),
@@ -235,13 +252,40 @@
         ? el("p", { class: "deal" },
             el("strong", {}, "Deal: "), b.deals.map((d) => d.title).join(" · "),
             b.freeKids ? ` (${b.freeKids} kid${b.freeKids === 1 ? "" : "s"} free)` : "",
-            `. Saves about ${money(b.savings)}.`)
+            `. Saves about ${money(b.savings)}.`,
+            b.deals.some((d) => d.note) ? el("span", { class: "deal-note" }, " " + b.deals.filter((d) => d.note).map((d) => d.note).join(" ")) : null)
         : null,
       lines,
       el("p", { class: "meta" }, CONFIDENCE[b.confidence] || ""),
       breakdown,
-      r.options.length > 1 ? channels : null
+      r.options.length > 1 ? channels : null,
+      reviewLinks(r.restaurant),
+      sourceLine(r.restaurant)
     );
+  }
+
+  /* Reviews side by side: links to each site's page for this restaurant (no ratings are stored). */
+  function reviewLinks(rest) {
+    if (!rest.address) return null;
+    const q = encodeURIComponent(`${rest.name.replace(/\s*\(.*?\)\s*/g, " ").trim()} ${rest.address}`);
+    const sites = [
+      ["Google", `https://www.google.com/maps/search/?api=1&query=${q}`],
+      ["Yelp", `https://www.yelp.com/search?find_desc=${encodeURIComponent(rest.name)}&find_loc=${encodeURIComponent(rest.address)}`],
+      ["Tripadvisor", `https://www.tripadvisor.com/Search?q=${q}`]
+    ];
+    return el("div", { class: "reviews" },
+      el("span", { class: "label", style: "margin:0" }, "Reviews"),
+      el("div", { class: "review-row" },
+        sites.map(([name, url]) => el("a", { class: "review-link", href: url, target: "_blank", rel: "noopener" }, name))));
+  }
+
+  /* Where the prices came from and when. */
+  function sourceLine(rest) {
+    const src = rest.sources && (rest.sources.website || rest.sources.toast);
+    if (!src) return null;
+    const host = rest.sources.website ? "restaurant's website" : "restaurant's Toast ordering page";
+    return el("p", { class: "meta" }, "Prices from the ", el("a", { href: src, target: "_blank", rel: "noopener" }, host),
+      rest.lastChecked ? `, checked ${rest.lastChecked}.` : ".");
   }
 
   function portionWord(n) {
@@ -269,7 +313,8 @@
   const priceOn = $("price-on");
   priceOn.append(el("option", { value: "direct" }, "Restaurant"));
   for (const c of data.channels) {
-    if (c.priceKey !== "direct") priceOn.append(el("option", { value: c.priceKey }, c.label));
+    const collected = data.restaurants.some((r) => r.items.some((i) => typeof (i.prices || {})[c.priceKey] === "number"));
+    if (c.priceKey !== "direct" && collected) priceOn.append(el("option", { value: c.priceKey }, c.label));
   }
 
   function renderDish() {

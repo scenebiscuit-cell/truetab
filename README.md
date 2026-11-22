@@ -4,13 +4,16 @@
 
 Created by Nick Lax.
 
-> **Status: prototype with sample data.** Every restaurant, price, fee and rating in `data/sample-data.js` is invented. The neighborhoods are real Austin areas; the restaurants are not.
+> **Status: real data for 78745 (6 restaurants), collected 2026-11-22 from restaurants' own websites and Toast ordering pages.** DoorDash and Uber Eats prices are estimated, not collected. `data/sample-data.js` is fictional and used only by the tests.
 
 ## Features
 
 - **Feed my group:** budget range (minimum and maximum), adults, kids, how you'll eat (dine-in, pickup, delivery), when, tip. Each restaurant shows its cheapest order that feeds everyone, the cheapest way to get it, cost per person, and a Fits / Just over / Over budget tag.
 - **Cuisine and diet filters:** untick cuisines you never want (remembered on your device); vegetarian, vegan and gluten-free meals built only from items the menu tags that way. Not an allergy guarantee, and the page says so.
 - **Deals:** set prices, percent off, dollars off and kids eat free, applied only on their days, hours and ways to order. Each card shows the deal and how much it saves.
+- **App price estimator:** DoorDash and Uber Eats menu prices estimated from the restaurant's price plus an adjustable markup (default 20%), then typical fees. Always labeled "est."
+- **Kids' meals, card surcharges, to-go fees and opening hours** are counted when the menu states them.
+- **Reviews side by side:** links to each restaurant's Google, Yelp and Tripadvisor pages. Live ratings are planned.
 - **Data checklist** (`check.html`): which restaurants are due for a weekly check, with links to their website and social pages.
 - **Honest portions:** every item says where its portion size came from: the restaurant, customer reports, or a typical amount for that kind of dish. Cards say "Some portions estimated" when any guess was used.
 - **Price breakdown** for every order, and a comparison of every way to order from that spot.
@@ -44,8 +47,10 @@ npm test
 | `src/engine.js` | All the math. No page code, so it can be tested in Node |
 | `src/app.js` | The only file that touches the page |
 | `src/styles.css` | Styles, from the Nick Lax 2026 Design System |
-| `data/sample-data.js` | Fictional sample data |
+| `data/austin-78745.js` | Real 78745 data the page uses |
+| `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
-| `tests/engine.test.js` | 29 engine tests |
+| `tests/engine.test.js` | 29 engine tests (sample data) |
+| `tests/real-data.test.js` | 11 checks on the real data |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones and decisions |
