@@ -72,23 +72,66 @@
   selectTab(0);
 
   /* ---------- Feed my group ---------- */
-  const groupSelect = $("group");
-  groupSelect.append(el("option", { value: "all" }, "Everything"));
-  for (const [id, label] of Object.entries(data.groups)) groupSelect.append(el("option", { value: id }, label));
+  /* Cuisine and diet checkboxes. Hidden cuisines are remembered on this device. */
+  const CUISINE_KEY = "menu-math-hidden-cuisines";
+  const allCuisines = [...new Set(data.restaurants.flatMap((r) => r.cuisines || []))].sort();
+  let hiddenCuisines = [];
+  try { hiddenCuisines = JSON.parse(localStorage.getItem(CUISINE_KEY) || "[]"); } catch (e) { hiddenCuisines = []; }
+
+  function checkbox(name, value, label, checked) {
+    return el("label", {}, el("input", { type: "checkbox", name, value, checked: checked ? true : null }), label);
+  }
+  const cuisineList = $("cuisine-list");
+  for (const c of allCuisines) cuisineList.append(checkbox("cuisine", c, c, !hiddenCuisines.includes(c)));
+  const dietList = $("diet-list");
+  for (const [id, label] of Object.entries(data.dietTags || {})) dietList.append(checkbox("diet", id, label, false));
+
+  function saveHidden() {
+    const hidden = [...cuisineList.querySelectorAll("input")].filter((i) => !i.checked).map((i) => i.value);
+    try { localStorage.setItem(CUISINE_KEY, JSON.stringify(hidden)); } catch (e) {}
+  }
+  function setAllCuisines(on) {
+    cuisineList.querySelectorAll("input").forEach((i) => (i.checked = on));
+    saveHidden();
+    renderFeed();
+  }
+  $("cuisine-all").addEventListener("click", () => setAllCuisines(true));
+  $("cuisine-none").addEventListener("click", () => setAllCuisines(false));
+
+  /* When: "Right now" uses the visitor's clock; a chosen day shows a time box. */
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  function readWhen() {
+    const day = $("when-day").value;
+    const timeField = $("when-time-field");
+    if (day === "now") {
+      timeField.hidden = true;
+      const d = new Date();
+      $("when-help").textContent = `Deals running now (${DAYS[d.getDay()]} ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}) are included.`;
+      return { day: d.getDay(), minutes: d.getHours() * 60 + d.getMinutes() };
+    }
+    timeField.hidden = false;
+    $("when-help").textContent = "Deals running then are included.";
+    const t = $("when-time").value || "18:00";
+    return { day: Number(day), minutes: M.toMinutes(t) };
+  }
 
   function readQuery() {
     const num = (id, fallback) => {
       const v = parseFloat($(id).value);
       return Number.isFinite(v) && v >= 0 ? v : fallback;
     };
+    const checked = (list) => [...list.querySelectorAll("input:checked")].map((i) => i.value);
     return {
+      budgetMin: num("budget-min", 0),
       budget: num("budget", 0),
       adults: Math.floor(num("adults", 0)),
       kids: Math.floor(num("kids", 0)),
       mode: $("mode").value,
-      group: $("group").value,
+      cuisines: checked(cuisineList),
+      diet: checked(dietList),
       sort: $("sort").value,
-      tipPct: parseFloat($("tip").value)
+      tipPct: parseFloat($("tip").value),
+      when: readWhen()
     };
   }
 
@@ -106,14 +149,18 @@
     const who = [q.adults && `${q.adults} adult${q.adults === 1 ? "" : "s"}`, q.kids && `${q.kids} kid${q.kids === 1 ? "" : "s"}`]
       .filter(Boolean).join(" and ");
     const summary = $("feed-summary");
+    const range = q.budgetMin > 0 && q.budget > 0 ? `${money(q.budgetMin)}–${money(q.budget)}`
+      : q.budget > 0 ? `${money(q.budget)}` : null;
     summary.replaceChildren(
       "Feeding ", el("strong", {}, who), ` (${fmt(out.portions)} adult portions). `,
-      ...(q.budget > 0
-        ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spots fit ${money(q.budget)} all-in.`]
-        : [`${out.results.length} spots, no budget set.`])
+      ...(range
+        ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spots fit ${range} all-in.`]
+        : [`${out.results.length} spots.`]),
+      out.hiddenBelow ? ` ${out.hiddenBelow} cheaper spot${out.hiddenBelow === 1 ? "" : "s"} hidden by your minimum.` : ""
     );
     if (!out.results.length) {
-      box.append(el("div", { class: "empty" }, el("p", {}, "Nothing matches. Try another food type or allow delivery.")));
+      const why = q.cuisines.length === 0 ? "No cuisines are selected." : "Nothing matches.";
+      box.append(el("div", { class: "empty" }, el("p", {}, `${why} Try more cuisines, a different diet setting, or another way to eat.`)));
       return;
     }
     out.results.forEach((r, i) => box.append(card(r, out, q, i === 0 && r.status === "fits")));
@@ -127,7 +174,9 @@
       b.order.lines.map((l) =>
         el("li", {},
           el("span", {}, `${l.qty} × ${l.name}`),
-          el("span", { class: "num" }, money(l.lineTotal)),
+          el("span", { class: "num" },
+            l.deal ? el("span", { class: "was" }, money(l.deal.was * l.qty)) : null,
+            money(l.lineTotal)),
           el("span", { class: `src src-${l.servesEach.source}` }, l.servesEach.label)
         )
       )
@@ -157,7 +206,7 @@
         el("tbody", {},
           r.options.map((o, i) =>
             el("tr", { class: i === 0 ? "cheapest" : null },
-              el("td", {}, o.channelLabel + (i === 0 ? " (cheapest)" : "")),
+              el("td", {}, o.channelLabel + (o.deals.length ? " (with deal)" : "") + (i === 0 ? " (cheapest)" : "")),
               el("td", {}, money(o.price.total)))
           )
         )
@@ -176,10 +225,18 @@
       ),
       el("div", { class: "price-row" },
         el("span", { class: "price" }, "est. " + money(p.total)),
-        el("span", { class: "price-note" }, `${money(b.perPerson)} per person`)
+        out.people > 1 ? el("span", { class: "price-note" }, `${money(b.perPerson)} per person`) : null
       ),
-      el("p", { class: "via" }, "Cheapest via ", el("strong", {}, b.channelLabel),
-        `. Feeds ${fmt(b.order.portions)} portions` + (extra > 0.05 ? ` (${fmt(extra)} extra).` : ".")),
+      el("p", { class: "via" }, "Cheapest way: ", el("strong", {}, b.channelLabel),
+        b.freeKids
+          ? `. Buys ${fmt(b.order.portions)} adult portions; ${b.freeKids} kids' meal${b.freeKids === 1 ? " is" : "s are"} free.`
+          : `. Feeds ${portionWord(b.order.portions)}` + (extra > 0.05 ? ` (${fmt(extra)} extra).` : ".")),
+      b.deals.length
+        ? el("p", { class: "deal" },
+            el("strong", {}, "Deal: "), b.deals.map((d) => d.title).join(" · "),
+            b.freeKids ? ` (${b.freeKids} kid${b.freeKids === 1 ? "" : "s"} free)` : "",
+            `. Saves about ${money(b.savings)}.`)
+        : null,
       lines,
       el("p", { class: "meta" }, CONFIDENCE[b.confidence] || ""),
       breakdown,
@@ -187,12 +244,19 @@
     );
   }
 
+  function portionWord(n) {
+    return `${fmt(n)} portion${fmt(n) === "1" ? "" : "s"}`;
+  }
+
   function fmt(n) {
     const r = Math.round(n * 10) / 10;
     return Number.isInteger(r) ? String(r) : r.toFixed(1);
   }
 
-  $("feed-form").addEventListener("input", renderFeed);
+  $("feed-form").addEventListener("input", (e) => {
+    if (e.target.name === "cuisine") saveHidden();
+    renderFeed();
+  });
   $("feed-form").addEventListener("submit", (e) => e.preventDefault());
   renderFeed();
 

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="src/styles.css?v=2026-11-22">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-22b">
   <script>
     // Pick the theme before the page paints, so it never flashes the wrong one.
     (function () {
@@ -46,9 +46,14 @@
     <section class="wrap view" id="view-feed" role="tabpanel" aria-labelledby="tab-feed">
       <form class="controls" id="feed-form" novalidate>
         <div class="field">
-          <label for="budget">Budget, all-in</label>
+          <label for="budget-min">Spend at least</label>
+          <div class="money"><span aria-hidden="true">$</span><input id="budget-min" name="budgetMin" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+          <p class="help">All-in. 0 means no minimum.</p>
+        </div>
+        <div class="field">
+          <label for="budget">Spend up to</label>
           <div class="money"><span aria-hidden="true">$</span><input id="budget" name="budget" type="number" inputmode="decimal" min="0" step="1" value="40"></div>
-          <p class="help">Leave at 0 to see everything.</p>
+          <p class="help">All-in. 0 means no limit.</p>
         </div>
         <div class="field">
           <label for="adults">Adults</label>
@@ -60,16 +65,32 @@
           <p class="help">A kid counts as 0.6 of an adult portion.</p>
         </div>
         <div class="field">
-          <label for="mode">How you'll get it</label>
+          <label for="mode">How you'll eat</label>
           <select id="mode" name="mode">
-            <option value="any">Pickup or delivery</option>
+            <option value="any">Any way</option>
+            <option value="takeout">Pickup or delivery</option>
             <option value="pickup">Pickup only</option>
             <option value="delivery">Delivery only</option>
+            <option value="dine-in">Dine in</option>
           </select>
         </div>
         <div class="field">
-          <label for="group">Food</label>
-          <select id="group" name="group"></select>
+          <label for="when-day">When</label>
+          <select id="when-day" name="whenDay">
+            <option value="now">Right now</option>
+            <option value="0">Sunday</option>
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+          </select>
+          <p class="help" id="when-help">Deals running now are included.</p>
+        </div>
+        <div class="field" id="when-time-field" hidden>
+          <label for="when-time">Time</label>
+          <input id="when-time" name="whenTime" type="time" value="18:00">
         </div>
         <div class="field">
           <label for="sort">Sort by</label>
@@ -79,14 +100,31 @@
           </select>
         </div>
         <div class="field">
-          <label for="tip">Delivery tip</label>
+          <label for="tip">Tip</label>
           <select id="tip" name="tip">
             <option value="0.15">15%</option>
             <option value="0.18" selected>18%</option>
             <option value="0.2">20%</option>
             <option value="0">No tip</option>
           </select>
+          <p class="help">Dine-in and delivery. Pickup has none.</p>
         </div>
+
+        <fieldset class="field wide checks" id="cuisine-field">
+          <legend>Cuisines</legend>
+          <div class="check-row" id="cuisine-list"></div>
+          <div class="check-actions">
+            <button type="button" class="btn btn-small" id="cuisine-all">Select all</button>
+            <button type="button" class="btn btn-small" id="cuisine-none">Clear all</button>
+          </div>
+          <p class="help">Untick anything you never want to see. Your choices are remembered on this device.</p>
+        </fieldset>
+
+        <fieldset class="field wide checks">
+          <legend>Diet</legend>
+          <div class="check-row" id="diet-list"></div>
+          <p class="help">Based on what each menu says. If you have an allergy, confirm with the restaurant.</p>
+        </fieldset>
       </form>
 
       <p class="summary" id="feed-summary" aria-live="polite"></p>
@@ -123,6 +161,7 @@
         <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
         <li><strong>Portions</strong> come from what the restaurant says first, then customer reports, then a typical amount for that kind of dish. Every card says which one it used.</li>
         <li><strong>Prices are estimates.</strong> Delivery fees change with distance, time and promotions, so your checkout may differ by a dollar or two.</li>
+        <li><strong>Deals</strong> count only on the days, hours and ways to order they apply to. Menu Math works out the order with and without the deal and keeps the cheaper one.</li>
         <li><strong>Best value</strong> compares rating to cost per person. A 3-star place adds no value; each star above that does.</li>
       </ul>
     </section>
@@ -130,12 +169,12 @@
 
   <footer class="foot">
     <div class="wrap">
-      <p>Created by Nick Lax · Prototype with sample data · Not affiliated with any delivery app.</p>
+      <p>Created by Nick Lax · Prototype with sample data · Not affiliated with any delivery app · <a href="check.html">Data checklist</a></p>
     </div>
   </footer>
 
-  <script src="data/sample-data.js?v=2026-11-22"></script>
-  <script src="src/engine.js?v=2026-11-22"></script>
-  <script src="src/app.js?v=2026-11-22"></script>
+  <script src="data/sample-data.js?v=2026-11-22b"></script>
+  <script src="src/engine.js?v=2026-11-22b"></script>
+  <script src="src/app.js?v=2026-11-22b"></script>
 </body>
 </html>

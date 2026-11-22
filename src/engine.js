@@ -141,7 +141,8 @@
         qty,
         unitPrice: options[i].price,
         lineTotal: cents(options[i].price * qty),
-        servesEach: options[i].serves
+        servesEach: options[i].serves,
+        deal: options[i].item.deal || null
       }))
       .sort((a, b) => b.lineTotal - a.lineTotal);
     return { lines, subtotal: cents(best[bestS]), portions: Math.round((bestS / RES) * 100) / 100 };
@@ -162,27 +163,132 @@
     return "over";
   }
 
+  /* ---------- Time and deals ---------- */
+
+  // "15:30" -> 930 minutes after midnight.
+  function toMinutes(hhmm) {
+    const [h, m] = String(hhmm).split(":").map(Number);
+    return h * 60 + (m || 0);
+  }
+
+  // Deals running at this restaurant, on this channel, at this day and time.
+  // when: { day: 0-6 (Sunday = 0), minutes: minutes after midnight }
+  function activeDeals(data, restaurantId, channelId, when) {
+    if (!data.deals || !when) return [];
+    return data.deals.filter((d) => {
+      if (d.restaurantId !== restaurantId) return false;
+      if (d.channels && !d.channels.includes(channelId)) return false;
+      if (d.days && !d.days.includes(when.day)) return false;
+      const start = d.start ? toMinutes(d.start) : 0;
+      const end = d.end ? toMinutes(d.end) : 24 * 60;
+      return when.minutes >= start && when.minutes < end;
+    });
+  }
+
+  function dealMatchesItem(deal, item) {
+    const a = deal.appliesTo || {};
+    if (a.itemIds) return a.itemIds.includes(item.id);
+    if (a.dishTypes) return a.dishTypes.includes(item.dishType);
+    return false;
+  }
+
+  function dealPrice(deal, price) {
+    if (deal.type === "price") return Math.min(price, deal.value);
+    if (deal.type === "percent") return price * (1 - deal.value);
+    if (deal.type === "amountOff") return Math.max(0, price - deal.value);
+    return price;
+  }
+
+  // Copies of the items with item deals applied to this channel's price.
+  // Each discounted copy remembers which deal it used.
+  function itemsWithDeals(items, deals, priceKey) {
+    const itemDeals = deals.filter((d) => d.type !== "kids-free");
+    if (!itemDeals.length) return items;
+    return items.map((item) => {
+      const base = item.prices && item.prices[priceKey];
+      if (typeof base !== "number") return item;
+      let best = base;
+      let used = null;
+      for (const d of itemDeals) {
+        if (!dealMatchesItem(d, item)) continue;
+        const p = dealPrice(d, base);
+        if (p < best - 1e-9) { best = p; used = d; }
+      }
+      if (!used) return item;
+      return Object.assign({}, item, {
+        prices: Object.assign({}, item.prices, { [priceKey]: cents(best) }),
+        deal: { id: used.id, title: used.title, was: base }
+      });
+    });
+  }
+
+  /* ---------- Filters ---------- */
+
+  // Items allowed by the diet filter: an item must carry every tag asked for.
+  function dietItems(items, diet) {
+    if (!diet || !diet.length) return items;
+    return items.filter((i) => diet.every((t) => (i.tags || []).includes(t)));
+  }
+
+  function cuisineAllowed(restaurant, cuisines) {
+    if (!cuisines) return true; // no filter set: show everything
+    return (restaurant.cuisines || []).some((c) => cuisines.includes(c));
+  }
+
   /*
    * The main search. For each restaurant, find the cheapest order that feeds the group
-   * on every allowed channel, price it all-in, and rank the results.
-   * query: { adults, kids, budget, stretch, mode: "any"|"pickup"|"delivery", group, sort, tipPct }
+   * on every allowed channel, apply any deal running at that time, price it all-in, and rank.
+   * query: { adults, kids, budget, budgetMin, stretch, mode, cuisines, diet, sort, tipPct, when }
+   * mode: "any" | "takeout" (pickup or delivery) | "pickup" | "delivery" | "dine-in"
    */
   function search(data, query) {
-    const portions = partyPortions(query.adults || 0, query.kids || 0, data.appetite);
-    const people = (query.adults || 0) + (query.kids || 0);
+    const adults = query.adults || 0;
+    const kids = query.kids || 0;
+    const appetite = data.appetite || { adult: 1, kid: 0.6 };
+    const portions = partyPortions(adults, kids, appetite);
+    const people = adults + kids;
     const results = [];
+    let hiddenBelow = 0;
     for (const r of data.restaurants) {
-      if (query.group && query.group !== "all" && r.group !== query.group) continue;
+      if (!cuisineAllowed(r, query.cuisines)) continue;
+      const allowedItems = dietItems(r.items, query.diet);
       const options = [];
       for (const base of data.channels) {
-        if (query.mode === "pickup" && base.kind !== "pickup") continue;
-        if (query.mode === "delivery" && base.kind !== "delivery") continue;
+        if (!modeAllows(query.mode, base.kind)) continue;
         const ch = channelFor(r, base);
         if (!ch) continue;
-        const order = cheapestOrder(r, ch, portions, data.dishTypes);
-        if (!order) continue;
+        const plain = Object.assign({}, r, { items: allowedItems });
+        const baseOrder = cheapestOrder(plain, ch, portions, data.dishTypes);
+        if (!baseOrder) continue;
         const tip = ch.kind === "pickup" ? 0 : query.tipPct;
-        const price = allInPrice(order.subtotal, ch, data.taxRate, tip);
+        const basePrice = allInPrice(baseOrder.subtotal, ch, data.taxRate, tip);
+
+        // Try again with any deals running right now.
+        let order = baseOrder;
+        let price = basePrice;
+        let usedDeals = [];
+        let freeKids = 0;
+        const deals = activeDeals(data, r.id, ch.id, query.when);
+        if (deals.length) {
+          const kidsDeal = deals.find((d) => d.type === "kids-free");
+          freeKids = kidsDeal && adults > 0 ? Math.min(kids, adults * (kidsDeal.perAdult || 1)) : 0;
+          const paidPortions = portions - freeKids * appetite.kid;
+          const dealItems = itemsWithDeals(allowedItems, deals, ch.priceKey);
+          const dealOrder = cheapestOrder(Object.assign({}, r, { items: dealItems }), ch, paidPortions, data.dishTypes);
+          if (dealOrder) {
+            const dealPrice = allInPrice(dealOrder.subtotal, ch, data.taxRate, tip);
+            if (dealPrice.total < basePrice.total - 0.005) {
+              order = dealOrder;
+              price = dealPrice;
+              const lineDeals = dealOrder.lines.filter((l) => l.deal).map((l) => l.deal.id);
+              usedDeals = deals.filter((d) => lineDeals.includes(d.id) || (d === kidsDeal && freeKids > 0));
+            } else {
+              freeKids = 0;
+            }
+          } else {
+            freeKids = 0;
+          }
+        }
         options.push({
           channelId: ch.id,
           channelLabel: ch.label,
@@ -190,12 +296,19 @@
           order,
           price,
           perPerson: people ? cents(price.total / people) : price.total,
-          confidence: orderConfidence(order.lines)
+          confidence: orderConfidence(order.lines),
+          deals: usedDeals.map((d) => ({ id: d.id, title: d.title })),
+          freeKids,
+          savings: cents(basePrice.total - price.total)
         });
       }
       if (!options.length) continue;
       options.sort((a, b) => a.price.total - b.price.total);
       const best = options[0];
+      if (query.budgetMin && best.price.total < query.budgetMin - 1e-9) {
+        hiddenBelow++;
+        continue;
+      }
       results.push({
         restaurant: r,
         best,
@@ -210,7 +323,13 @@
       if (query.sort === "cheapest") return a.best.price.total - b.best.price.total;
       return b.value - a.value;
     });
-    return { portions, people, results };
+    return { portions, people, results, hiddenBelow };
+  }
+
+  function modeAllows(mode, kind) {
+    if (!mode || mode === "any") return true;
+    if (mode === "takeout") return kind === "pickup" || kind === "delivery";
+    return mode === kind;
   }
 
   /*
@@ -270,6 +389,11 @@
     orderConfidence,
     budgetStatus,
     valueScore,
+    toMinutes,
+    activeDeals,
+    itemsWithDeals,
+    dietItems,
+    cuisineAllowed,
     search,
     compareDish
   };

@@ -138,3 +138,100 @@ test("portion labels read as people would say them", () => {
   assert.equal(M.fmtServes(4), "4");
   assert.equal(M.fmtServes(2.67), "2 2/3");
 });
+
+/* ---------- Deals, filters, dine-in ---------- */
+
+const TUE_NOON = { day: 2, minutes: 12 * 60 };
+const MON_6PM = { day: 1, minutes: 18 * 60 };
+const SAT_6PM = { day: 6, minutes: 18 * 60 };
+
+test("deals only run on their days, hours and channels", () => {
+  assert.equal(M.activeDeals(data, "sol-y-masa", "pickup", TUE_NOON).length, 1);
+  assert.equal(M.activeDeals(data, "sol-y-masa", "doordash", TUE_NOON).length, 0); // not on delivery
+  assert.equal(M.activeDeals(data, "sol-y-masa", "pickup", SAT_6PM).length, 0); // not Saturday
+  assert.equal(M.activeDeals(data, "post-oak-smoke", "pickup", { day: 3, minutes: 14 * 60 }).length, 0); // ends at 2 pm
+  assert.equal(M.activeDeals(data, "post-oak-smoke", "pickup", { day: 3, minutes: 13 * 60 + 59 }).length, 1);
+});
+
+test("item deals lower the price and remember the original", () => {
+  const deals = M.activeDeals(data, "sol-y-masa", "pickup", TUE_NOON);
+  const items = M.itemsWithDeals(rest("sol-y-masa").items, deals, "direct");
+  const taco = items.find((i) => i.id === "sym-at");
+  assert.equal(taco.prices.direct, 2);
+  assert.equal(taco.deal.was, 3.95);
+  assert.equal(items.find((i) => i.id === "sym-bt").deal, undefined); // breakfast tacos not included
+});
+
+test("Taco Tuesday makes $2 tacos the cheapest pickup order and reports the savings", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "pickup", when: TUE_NOON });
+  const sym = out.results.find((r) => r.restaurant.id === "sol-y-masa");
+  assert.deepEqual(sym.best.order.lines.map((l) => [l.itemId, l.qty]), [["sym-at", 3]]);
+  assert.equal(sym.best.deals[0].id, "sym-taco-tue");
+  // without the deal: 3 breakfast tacos 11.25 + tax; with it: 6.00 + tax
+  assert.equal(sym.best.savings, M.cents(11.25 * 1.0825) - M.cents(6 * 1.0825));
+});
+
+test("no deals without a time, so the base price is used", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "pickup" });
+  const sym = out.results.find((r) => r.restaurant.id === "sol-y-masa");
+  assert.equal(sym.best.deals.length, 0);
+  assert.equal(sym.best.savings, 0);
+});
+
+test("kids eat free: dine-in only pays for the adults' portions", () => {
+  const out = M.search(data, { adults: 2, kids: 2, mode: "dine-in", tipPct: 0.18, when: MON_6PM });
+  const sa = out.results.find((r) => r.restaurant.id === "smash-alley");
+  assert.equal(sa.best.freeKids, 2);
+  assert.equal(sa.best.order.subtotal, 21); // 2 burgers, kids free
+  assert.ok(sa.best.savings > 0);
+  // Saturday: no deal, so kids' portions are paid for
+  const sat = M.search(data, { adults: 2, kids: 2, mode: "dine-in", tipPct: 0.18, when: SAT_6PM });
+  assert.equal(sat.results.find((r) => r.restaurant.id === "smash-alley").best.freeKids, 0);
+});
+
+test("kids eat free needs at least one adult", () => {
+  const out = M.search(data, { adults: 0, kids: 2, mode: "dine-in", when: MON_6PM });
+  const sa = out.results.find((r) => r.restaurant.id === "smash-alley");
+  assert.equal(sa.best.freeKids, 0);
+});
+
+test("dine-in has no fees but does include tip", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "dine-in", tipPct: 0.2 });
+  for (const r of out.results) {
+    assert.equal(r.best.kind, "dine-in");
+    assert.equal(r.best.price.fees, 0);
+    assert.equal(r.best.price.tip, M.cents(r.best.price.subtotal * 0.2));
+  }
+});
+
+test("takeout mode means pickup or delivery, never dine-in", () => {
+  const out = M.search(data, { adults: 2, kids: 0, mode: "takeout" });
+  for (const r of out.results) for (const o of r.options) assert.notEqual(o.kind, "dine-in");
+});
+
+test("cuisine filter keeps only chosen cuisines; an empty list shows nothing", () => {
+  const out = M.search(data, { adults: 1, kids: 0, cuisines: ["Thai", "Indian"] });
+  assert.deepEqual(out.results.map((r) => r.restaurant.id).sort(), ["lemongrass-lane", "saffron-tiffin"]);
+  assert.equal(M.search(data, { adults: 1, kids: 0, cuisines: [] }).results.length, 0);
+});
+
+test("diet filter builds the meal only from items tagged for that diet", () => {
+  const out = M.search(data, { adults: 2, kids: 0, diet: ["vegan"] });
+  assert.ok(out.results.length >= 2);
+  for (const r of out.results) {
+    for (const l of r.best.order.lines) {
+      const item = r.restaurant.items.find((i) => i.id === l.itemId);
+      assert.ok(item.tags.includes("vegan"), `${l.itemId} is not tagged vegan`);
+    }
+  }
+  // Smash Alley has nothing tagged vegan, so it drops out
+  assert.ok(!out.results.some((r) => r.restaurant.id === "smash-alley"));
+});
+
+test("budget minimum hides spots that come in under it and counts them", () => {
+  const all = M.search(data, { adults: 2, kids: 0 });
+  const ranged = M.search(data, { adults: 2, kids: 0, budgetMin: 40 });
+  assert.ok(ranged.hiddenBelow > 0);
+  assert.equal(ranged.results.length + ranged.hiddenBelow, all.results.length);
+  for (const r of ranged.results) assert.ok(r.best.price.total >= 40);
+});
