@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu Math: what your budget actually gets you in Austin</title>
+  <meta name="description" content="Compare Austin restaurant prices across pickup and delivery apps, all-in, for one person or a whole family.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-22">
+  <script>
+    // Pick the theme before the page paints, so it never flashes the wrong one.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("menu-math-theme"); } catch (e) {}
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#results">Skip to results</a>
+
+  <header class="top">
+    <div class="wrap top-row">
+      <span class="brand">Menu Math</span>
+      <button type="button" class="btn btn-ghost" id="theme-toggle" aria-pressed="false">Dark theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap">
+      <p class="eyebrow">Austin · pickup vs. delivery</p>
+      <h1>What does your budget <span class="mark">actually</span> get you?</h1>
+      <p class="lead">Set a budget and who you're feeding. Menu Math finds the cheapest way to feed everyone at each spot, with delivery fees, service fees, tax and tip already counted.</p>
+      <p class="notice" role="note"><strong>Sample data.</strong> The restaurants, prices, fees and ratings below are invented to test the idea. Real Austin data comes next.</p>
+    </section>
+
+    <div class="wrap tabs" role="tablist" aria-label="Views">
+      <button type="button" class="tab" id="tab-feed" aria-selected="true" aria-controls="view-feed" role="tab">Feed my group</button>
+      <button type="button" class="tab" id="tab-dish" aria-selected="false" aria-controls="view-dish" role="tab">Compare a dish</button>
+    </div>
+
+    <!-- Feed my group -->
+    <section class="wrap view" id="view-feed" role="tabpanel" aria-labelledby="tab-feed">
+      <form class="controls" id="feed-form" novalidate>
+        <div class="field">
+          <label for="budget">Budget, all-in</label>
+          <div class="money"><span aria-hidden="true">$</span><input id="budget" name="budget" type="number" inputmode="decimal" min="0" step="1" value="40"></div>
+          <p class="help">Leave at 0 to see everything.</p>
+        </div>
+        <div class="field">
+          <label for="adults">Adults</label>
+          <input id="adults" name="adults" type="number" inputmode="numeric" min="0" max="20" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="kids">Kids</label>
+          <input id="kids" name="kids" type="number" inputmode="numeric" min="0" max="20" step="1" value="2">
+          <p class="help">A kid counts as 0.6 of an adult portion.</p>
+        </div>
+        <div class="field">
+          <label for="mode">How you'll get it</label>
+          <select id="mode" name="mode">
+            <option value="any">Pickup or delivery</option>
+            <option value="pickup">Pickup only</option>
+            <option value="delivery">Delivery only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="group">Food</label>
+          <select id="group" name="group"></select>
+        </div>
+        <div class="field">
+          <label for="sort">Sort by</label>
+          <select id="sort" name="sort">
+            <option value="value">Best value</option>
+            <option value="cheapest">Cheapest</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tip">Delivery tip</label>
+          <select id="tip" name="tip">
+            <option value="0.15">15%</option>
+            <option value="0.18" selected>18%</option>
+            <option value="0.2">20%</option>
+            <option value="0">No tip</option>
+          </select>
+        </div>
+      </form>
+
+      <p class="summary" id="feed-summary" aria-live="polite"></p>
+      <h2 class="sr-only">Results</h2>
+      <div id="results" class="results"></div>
+    </section>
+
+    <!-- Compare a dish -->
+    <section class="wrap view" id="view-dish" role="tabpanel" aria-labelledby="tab-dish" hidden>
+      <form class="controls" id="dish-form" novalidate>
+        <div class="field">
+          <label for="dish">Dish</label>
+          <select id="dish" name="dish"></select>
+        </div>
+        <div class="field">
+          <label for="price-on">Price on</label>
+          <select id="price-on" name="priceOn"></select>
+        </div>
+      </form>
+      <p class="summary" id="dish-summary" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="dish-table" id="dish-table">
+          <thead>
+            <tr><th scope="col">Item</th><th scope="col">Price</th><th scope="col">Per portion</th><th scope="col">Portion</th><th scope="col">Compared</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="wrap how">
+      <h2>How the numbers work</h2>
+      <ul>
+        <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
+        <li><strong>Portions</strong> come from what the restaurant says first, then customer reports, then a typical amount for that kind of dish. Every card says which one it used.</li>
+        <li><strong>Prices are estimates.</strong> Delivery fees change with distance, time and promotions, so your checkout may differ by a dollar or two.</li>
+        <li><strong>Best value</strong> compares rating to cost per person. A 3-star place adds no value; each star above that does.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>Created by Nick Lax · Prototype with sample data · Not affiliated with any delivery app.</p>
+    </div>
+  </footer>
+
+  <script src="data/sample-data.js?v=2026-11-22"></script>
+  <script src="src/engine.js?v=2026-11-22"></script>
+  <script src="src/app.js?v=2026-11-22"></script>
+</body>
+</html>
