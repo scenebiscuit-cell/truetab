@@ -108,3 +108,12 @@ test("Super Bowl's own two-for-one plates are flagged as BOGO", () => {
   const sb = out.results.find((x) => x.restaurant.id === "super-bowl");
   assert.ok(sb.best.bogo);
 });
+
+test("Super Bowl's two-for-one is checked against buying two singles", () => {
+  const out = M.search(real, { adults: 2, kids: 2, mode: "pickup" });
+  const sb = out.results.find((x) => x.restaurant.id === "super-bowl");
+  const line = sb.best.order.lines.find((l) => l.itemId === "sb-bogo-sesame");
+  assert.equal(line.promoWas, M.cents(9.49 * 2));
+  assert.ok(sb.best.check.saving > 0);
+  assert.equal(sb.best.check.verdict, "real");
+});

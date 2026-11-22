@@ -197,7 +197,8 @@
         el("li", {},
           el("span", {}, `${l.qty} × ${l.name}`),
           el("span", { class: "num" },
-            l.deal ? el("span", { class: "was" }, money(l.deal.was * l.qty)) : null,
+            l.deal ? el("span", { class: "was" }, money(l.deal.was * l.qty))
+              : l.promoWas ? el("span", { class: "was" }, money(l.promoWas * l.qty)) : null,
             (l.estimated ? "est. " : "") + money(l.lineTotal)),
           el("span", { class: `src src-${l.servesEach.source}` }, l.servesEach.label)
         )
@@ -233,7 +234,8 @@
         el("tbody", {},
           r.options.map((o, i) =>
             el("tr", { class: i === 0 ? "cheapest" : null },
-              el("td", {}, o.channelLabel + (o.estimated ? " (estimated)" : "") + (o.deals.length ? " (with deal)" : "") + (i === 0 ? " (cheapest)" : "")),
+              el("td", {}, o.channelLabel + (o.estimated ? " (estimated)" : "")
+                + (o.check ? ` (deal: ${VERDICT[o.check.verdict][0].toLowerCase()})` : "") + (i === 0 ? " (cheapest)" : "")),
               el("td", {}, money(o.price.total)))
           )
         )
@@ -263,16 +265,7 @@
         b.freeKids
           ? `. Buys ${fmt(b.order.portions)} adult portions; ${b.freeKids} kids' meal${b.freeKids === 1 ? " is" : "s are"} free.`
           : `. Feeds ${portionWord(b.order.portions)}` + (extra > 0.05 ? ` (${fmt(extra)} extra).` : ".")),
-      b.bogo && !b.deals.some((d) => d.type === "bogo")
-        ? el("p", { class: "deal" }, el("strong", {}, "Buy one, get one: "), "two-for-one plates on the restaurant's own menu.")
-        : null,
-      b.deals.length
-        ? el("p", { class: "deal" },
-            el("strong", {}, "Deal: "), b.deals.map((d) => d.title).join(" · "),
-            b.freeKids ? ` (${b.freeKids} kid${b.freeKids === 1 ? "" : "s"} free)` : "",
-            `. Saves about ${money(b.savings)}.`,
-            b.deals.some((d) => d.note) ? el("span", { class: "deal-note" }, " " + b.deals.filter((d) => d.note).map((d) => d.note).join(" ")) : null)
-        : null,
+      dealBlock(b),
       lines,
       el("p", { class: "meta" }, CONFIDENCE[b.confidence] || ""),
       breakdown,
@@ -280,6 +273,43 @@
       reviewLinks(r.restaurant),
       sourceLine(r.restaurant)
     );
+  }
+
+  /* ---------- Is the deal actually a value? ---------- */
+  const VERDICT = {
+    real: ["Real deal", "tag-fits"],
+    small: ["Small saving", "tag-just-over"],
+    "not-worth-it": ["Not worth it", "tag-over"]
+  };
+
+  function dealBlock(b) {
+    const c = b.check;
+    if (!c) return null;
+    const [label, cls] = VERDICT[c.verdict];
+    const what = b.deals.length
+      ? b.deals.map((d) => d.title).join(" · ") + (b.freeKids ? ` (${b.freeKids} kid${b.freeKids === 1 ? "" : "s"} free)` : "")
+      : "Buy one, get one on the restaurant's own menu";
+    const reasons = [];
+    reasons.push(c.saving > 0.005
+      ? `Saves ${money(c.saving)} (${c.pct}%) compared with the same order without the deal.`
+      : "Saves nothing compared with the same order without the deal.");
+    if (c.vsNoDeal < -0.005) reasons.push(`${c.noDealLabel} without any deal is ${money(-c.vsNoDeal)} cheaper.`);
+    else if (c.noDealSameChannel) reasons.push("Cheaper than any way of ordering without a deal.");
+    else reasons.push(`${money(c.vsNoDeal)} cheaper than the best way to order without a deal (${c.noDealLabel}).`);
+    for (const n of c.nearby) {
+      const how = n.status === "cheaper" ? "below" : n.status === "pricier" ? "above" : "about the same as";
+      reasons.push(`${n.name}: ${money(n.perPortion)} per portion with the deal, ${how} the typical ${money(n.median)} for similar dishes nearby (${n.count} compared).`);
+    }
+    for (const r of c.raised) {
+      reasons.push(`Watch out: ${r.name} went from ${money(r.from)} to ${money(r.to)} after ${r.date}, shortly before this deal started.`);
+    }
+    const notes = b.deals.filter((d) => d.note).map((d) => d.note);
+    return el("div", { class: "deal" },
+      el("div", { class: "deal-head" },
+        el("span", { class: `tag ${cls}` }, label),
+        el("strong", {}, what)),
+      el("ul", { class: "deal-reasons" }, reasons.map((t) => el("li", {}, t))),
+      notes.length ? el("p", { class: "deal-note" }, notes.join(" ")) : null);
   }
 
   /* Reviews side by side: links to each site's page for this restaurant (no ratings are stored). */

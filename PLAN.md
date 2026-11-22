@@ -18,6 +18,8 @@ Help people in Austin find the best meal for their money at any budget, from a $
   *Check:* for 3 restaurants, the estimate lands within about 10% of a real app checkout.
 - [ ] **M2d Buy-one-get-one.** Built: `bogo` deal type (2-for-1 version of matching items), BOGO badge, summary count, "Deals only" filter, `expires` dates. Super Bowl's two-for-one plates are flagged. Next: Nick logs app BOGOs seen in DoorDash and Uber Eats for 78745 spots, with end dates. Leads seen on Uber Eats listings near William Cannon: Super Bowl Restaurant, 3 Flames Halal (500 W William Cannon), Wild Peckers South Austin.
   *Check:* tick "Deals only" and only spots with a deal or BOGO remain; an app BOGO past its end date no longer shows.
+- [ ] **M2e Deal check ("is it actually a value?").** Built: every deal gets a verdict, Real deal (saves 10%+ with no warning signs), Small saving, or Not worth it, with reasons. It compares the deal with (1) the same order without it, (2) the cheapest way to order with no deal on any channel (so an app BOGO that loses to plain pickup is called out), (3) the typical price per portion for that dish type nearby, and (4) the item's price history, flagging a price rise in the 60 days before the deal. Next: build price history by moving old prices into `history` on each weekly check; after a month, show "price changes this month" on `check.html`.
+  *Check:* an app BOGO that costs more than plain pickup shows "Not worth it" with the pickup price.
 - [ ] **M2c Reviews side by side.** Built: each card links to the restaurant's Google, Yelp and Tripadvisor pages. Next: show live star ratings and review counts side by side through a small Cloudflare Worker (like Pharos's) calling each site's official API with its required branding and caching limits. Google Places API (usage-based billing), Yelp Fusion API (paid plans only), Tripadvisor Content API (apply for access). Ratings are never copied into the data files.
   *Check:* a card shows three ratings, each with its site's logo and a link, and the data files still contain no ratings.
 - [ ] **M3 Go live.** Publish on GitHub Pages; add the portfolio card; share the first "biggest gap" post.
@@ -55,6 +57,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Restaurant-specific charges the menu states are included: Moreno's 3% card surcharge, Evangeline's 40¢ per-item to-go container fee.
 - 2026-11-22: App markup default 20%, based on a 2023 industry study (average app premium about 20%; quick-service 26%, casual dining 11%). Adjustable on the page.
 - 2026-11-22: Ratings aren't stored (Google, Yelp and Tripadvisor terms). "Best value" sorting is hidden until live ratings exist; results sort by price.
+- 2026-11-22: Deal verdict thresholds: "Real deal" needs 10%+ savings with no warning signs; a price rise in the 60 days before the deal, or a deal price above the typical price for similar dishes, drops it to "Small saving"; anything that loses to ordering without a deal is "Not worth it". "Typical" needs at least two items of that dish type.
 - 2026-11-22: Restaurants are hidden when closed at the chosen time; ones without hours on file are shown.
 
 ## Money ideas (not built)

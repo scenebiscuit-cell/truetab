@@ -267,3 +267,41 @@ test("deals-only filter keeps only spots whose best option has a deal or BOGO", 
   assert.ok(out.results.length > 0);
   for (const r of out.results) assert.ok(r.best.deals.length || r.best.bogo);
 });
+
+/* ---------- Is the deal actually a value? ---------- */
+
+test("an app BOGO that costs more than plain pickup is 'not worth it'", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "any", tipPct: 0.18, when: NOV });
+  const bd = out.results.find((r) => r.restaurant.id === "bun-n-done");
+  const ue = bd.options.find((o) => o.channelId === "ubereats");
+  assert.ok(ue.bogo);
+  assert.equal(ue.check.verdict, "not-worth-it");
+  assert.ok(ue.check.vsNoDeal < 0);
+  assert.equal(ue.check.noDealLabel, "Pickup");
+});
+
+test("a deal that saves 10%+ with no warning signs is a 'real deal'", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "pickup", when: TUE_NOON });
+  const sym = out.results.find((r) => r.restaurant.id === "sol-y-masa");
+  assert.equal(sym.best.check.verdict, "real");
+  assert.ok(sym.best.check.pct >= 10);
+});
+
+test("a price rise shortly before the deal is caught and downgrades the verdict", () => {
+  const out = M.search(data, { adults: 2, kids: 0, mode: "delivery", tipPct: 0.18, when: NOV });
+  const ue = out.results.find((r) => r.restaurant.id === "bun-n-done").options.find((o) => o.channelId === "ubereats");
+  assert.equal(ue.check.raised.length, 1);
+  assert.deepEqual([ue.check.raised[0].from, ue.check.raised[0].to], [7, 8]);
+  assert.notEqual(ue.check.verdict, "real");
+});
+
+test("no check on options without deals", () => {
+  const out = M.search(data, { adults: 1, kids: 0, mode: "pickup" });
+  for (const r of out.results) assert.equal(r.best.check, null);
+});
+
+test("typical price per portion needs at least two items of that dish type", () => {
+  const med = M.perPortionMedians(data);
+  assert.ok(med["burger"]);
+  assert.equal(med["burger-family"], undefined); // only one in the sample
+});

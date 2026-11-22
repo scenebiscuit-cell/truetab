@@ -50,6 +50,8 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 - `tags` (optional) lists diet tags the menu states: `vegetarian`, `vegan`, `gluten-free`. When a visitor picks a diet, meals are built only from items carrying every chosen tag.
 - `cuisines` drives the cuisine checkboxes. Use the same spelling everywhere.
 - `sources` are links only, never copied content. `lastChecked` is the date you last looked at them.
+- `history` (optional): earlier prices, newest last, e.g. `history: [{ date: "2026-11-22", direct: 9.49 }]`. On each weekly check, when a price has changed, move the old price and its `lastChecked` date into `history` before updating `prices`. The deal check uses this to catch prices raised shortly before a deal.
+- `promo: "bogo"` with `pairOf: "<single item id>"` marks a restaurant's own two-for-one item, so the deal check can compare it with buying two singly.
 - A `defaultServes` of 0 marks an add-on (queso, fries, sides) that doesn't count toward feeding anyone.
 
 ## Deals
@@ -62,6 +64,7 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 
 - `days`: 0 = Sunday through 6 = Saturday. `start` and `end` are 24-hour times; the end minute isn't included. Use `"00:00"` to `"24:00"` for all day.
 - `type`: `price` (the item costs `value`), `percent` (`value` off, 0.25 = 25%), `amountOff` (`value` dollars off each), `kids-free` (`perAdult` kids eat free per paying adult), `bogo` (buy one, get one free on matching items).
+- `starts` (optional, `YYYY-MM-DD`): when the deal began; `verified` is used if it's missing.
 - `expires` (optional, `YYYY-MM-DD`): the last day the deal runs. Required for app promotions.
 - **App BOGOs** (DoorDash, Uber Eats): enter only what you see in the app yourself. Set `channels` to that app, `source` to "Seen in the Uber Eats app" (or DoorDash), `verified` to the date you saw it, and `expires` to the end date shown (or 7 days out if none is shown). Never collect them with a script.
 - A restaurant's own two-for-one items can also be regular items with `promo: "bogo"` and `portion.serves` for both orders.

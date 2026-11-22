@@ -109,8 +109,10 @@ fieldset.checks legend { font-weight: 600; padding: 0 var(--space-1); }
 .check-row label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
 .check-actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
 .btn-small { min-height: var(--target-min); font-size: 14px; background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
-.deal { background: var(--success-soft); color: var(--ink); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); margin: 0; }
-.deal strong { color: var(--success); }
+.deal { background: var(--paper-sunken); color: var(--ink); border-radius: var(--radius-md); padding: var(--space-3); margin: 0; }
+.deal-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.deal-reasons { margin: var(--space-2) 0 0; padding-left: 1.2em; font-size: 14px; }
+.deal-reasons li { margin-bottom: var(--space-1); }
 .was { text-decoration: line-through; color: var(--ink-muted); margin-right: var(--space-1); font-weight: 400; }
 .help { margin: var(--space-1) 0 0; font-size: 14px; color: var(--ink-muted); }
 

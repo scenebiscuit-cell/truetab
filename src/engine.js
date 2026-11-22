@@ -160,10 +160,28 @@
         servesEach: options[i].serves,
         deal: options[i].item.deal || null,
         estimated: !!options[i].item.estimatedPrice,
-        promo: options[i].item.promo || (options[i].item.deal && options[i].item.deal.type === "bogo" ? "bogo" : null)
+        promo: options[i].item.promo || (options[i].item.deal && options[i].item.deal.type === "bogo" ? "bogo" : null),
+        promoWas: pairRegular(restaurant, options[i].item, channel),
+        dishType: pairDishType(restaurant, options[i].item),
+        baseItemId: options[i].item.baseItemId || options[i].item.id
       }))
       .sort((a, b) => b.lineTotal - a.lineTotal);
     return { lines, subtotal: cents(best[bestS]), portions: Math.round((bestS / RES) * 100) / 100 };
+  }
+
+  // For a restaurant's own two-for-one item (pairOf: the single item), the price of buying two singly.
+  function pairRegular(restaurant, item, channel) {
+    if (!item.pairOf) return null;
+    const single = restaurant.items.find((i) => i.id === item.pairOf);
+    const p = single ? itemPrice(single, channel) : null;
+    return p === null ? null : cents(p * 2);
+  }
+
+  // Two-for-one items are compared with the single item's dish type (e.g. a regular entrée).
+  function pairDishType(restaurant, item) {
+    if (!item.pairOf) return item.dishType;
+    const single = restaurant.items.find((i) => i.id === item.pairOf);
+    return single ? single.dishType : item.dishType;
   }
 
   // How sure we are about an order overall: the weakest source among its lines.
@@ -234,6 +252,7 @@
       if (!d) continue;
       extra.push(Object.assign({}, item, {
         id: item.id + "--bogo",
+        baseItemId: item.id,
         name: item.name + ", buy one get one",
         servesMultiplier: 2,
         prices: Object.assign({}, item.prices, { [priceKey]: base }),
@@ -350,13 +369,14 @@
     const markupPct = typeof query.markupPct === "number" ? query.markupPct
       : typeof data.defaultMarkupPct === "number" ? data.defaultMarkupPct : 0.2;
     let closedNow = 0;
+    const medians = perPortionMedians(data);
     for (const r of data.restaurants) {
       if (!cuisineAllowed(r, query.cuisines)) continue;
       if (!isOpen(r, query.when)) { closedNow++; continue; }
       const allowedItems = dietItems(r.items, query.diet);
       const options = [];
       for (const base of data.channels) {
-        if (!modeAllows(query.mode, base.kind)) continue;
+        const inMode = modeAllows(query.mode, base.kind);
         const ch = channelFor(r, base);
         if (!ch) continue;
         const chItems = itemsForChannel(allowedItems, ch, markupPct);
@@ -396,6 +416,8 @@
           }
         }
         options.push({
+          inMode,
+          normalTotal: basePrice.total,
           channelId: ch.id,
           channelLabel: ch.label,
           kind: ch.kind,
@@ -411,9 +433,11 @@
           markupPct: ch.estimateFromDirect ? markupPct : null
         });
       }
-      if (!options.length) continue;
-      options.sort((a, b) => a.price.total - b.price.total);
-      const best = options[0];
+      const allOptions = options.slice();
+      const shown = options.filter((o) => o.inMode).sort((a, b) => a.price.total - b.price.total);
+      if (!shown.length) continue;
+      for (const o of allOptions) o.check = dealCheck(o, allOptions, r, medians, data);
+      const best = shown[0];
       if (query.dealsOnly && !best.deals.length && !best.bogo) continue;
       if (query.budgetMin && best.price.total < query.budgetMin - 1e-9) {
         hiddenBelow++;
@@ -422,7 +446,7 @@
       results.push({
         restaurant: r,
         best,
-        options,
+        options: shown,
         status: budgetStatus(best.price.total, query.budget, query.stretch),
         value: valueScore(r.rating, best.perPerson)
       });
@@ -434,6 +458,94 @@
       return b.value - a.value;
     });
     return { portions, people, results, hiddenBelow, closedNow };
+  }
+
+  /* ---------- Is the deal actually a value? ---------- */
+
+  // Typical restaurant price per adult portion for each dish type (median across the data).
+  function perPortionMedians(data) {
+    const byType = {};
+    for (const r of data.restaurants) {
+      for (const item of r.items) {
+        if (item.kidsOnly || typeof (item.prices || {}).direct !== "number") continue;
+        const s = servesFor(item, data.dishTypes);
+        if (!s.serves) continue;
+        (byType[item.dishType] = byType[item.dishType] || []).push(item.prices.direct / s.serves);
+      }
+    }
+    const out = {};
+    for (const [t, list] of Object.entries(byType)) {
+      if (list.length < 2) continue; // need at least two to call anything "typical"
+      list.sort((a, b) => a - b);
+      out[t] = { median: cents(median(list)), count: list.length };
+    }
+    return out;
+  }
+
+  function daysBetween(a, b) {
+    return Math.round((new Date(b + "T12:00:00") - new Date(a + "T12:00:00")) / 86400000);
+  }
+
+  /*
+   * For an option that uses a deal (or a restaurant's own two-for-one item), answer:
+   * 1) How much does it save versus the same order without the deal?
+   * 2) Is any way of ordering WITHOUT a deal cheaper (e.g. plain pickup beats an app BOGO)?
+   * 3) Even at the deal price, is the dish cheaper or pricier than similar dishes nearby?
+   * 4) Did the regular price go up in the 60 days before the deal started?
+   * Verdict: "real" (saves 10%+ with no warning signs), "small", or "not-worth-it".
+   */
+  function dealCheck(opt, allOptions, restaurant, medians, data) {
+    const promoSaving = opt.order.lines.reduce(
+      (n, l) => n + (l.promoWas ? Math.max(0, l.promoWas * l.qty - l.lineTotal) : 0), 0);
+    if (!opt.deals.length && promoSaving <= 0.005) return null;
+    const saving = cents(opt.savings + promoSaving);
+    const before = opt.price.total + saving;
+    const pct = before > 0 ? saving / before : 0;
+
+    const noDeal = allOptions.slice().sort((a, b) => a.normalTotal - b.normalTotal)[0];
+    const vsNoDeal = cents(noDeal.normalTotal - opt.price.total); // negative: plain ordering is cheaper
+
+    const nearby = [];
+    for (const l of opt.order.lines) {
+      if (!l.deal && !l.promoWas) continue;
+      const m = medians[l.dishType];
+      if (!m || !l.servesEach.serves) continue;
+      const per = cents(l.unitPrice / l.servesEach.serves);
+      const status = per < m.median * 0.95 ? "cheaper" : per > m.median * 1.05 ? "pricier" : "same";
+      nearby.push({ name: l.name, perPortion: per, median: m.median, count: m.count, status });
+    }
+
+    const raised = [];
+    for (const l of opt.order.lines) {
+      if (!l.deal) continue;
+      const deal = (data.deals || []).find((d) => d.id === l.deal.id);
+      const start = deal && (deal.starts || deal.verified);
+      const item = restaurant.items.find((i) => i.id === l.baseItemId);
+      if (!start || !item || !item.history || typeof (item.prices || {}).direct !== "number") continue;
+      const now = item.prices.direct;
+      const earlier = item.history
+        .filter((h) => typeof h.direct === "number" && h.direct < now - 0.005)
+        .filter((h) => { const d = daysBetween(h.date, start); return d >= 0 && d <= 60; })
+        .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+      if (earlier) raised.push({ name: item.name, from: earlier.direct, to: now, date: earlier.date });
+    }
+
+    let verdict;
+    if (vsNoDeal < -0.005 || saving <= 0.005) verdict = "not-worth-it";
+    else {
+      verdict = pct >= 0.1 ? "real" : "small";
+      if (verdict === "real" && (nearby.some((n) => n.status === "pricier") || raised.length)) verdict = "small";
+    }
+    return {
+      verdict,
+      saving,
+      pct: Math.round(pct * 1000) / 10,
+      vsNoDeal,
+      noDealLabel: noDeal.channelLabel,
+      noDealSameChannel: noDeal.channelId === opt.channelId,
+      nearby,
+      raised
+    };
   }
 
   function modeAllows(mode, kind) {
@@ -509,6 +621,8 @@
     dietItems,
     cuisineAllowed,
     search,
+    dealCheck,
+    perPortionMedians,
     compareDish
   };
 });

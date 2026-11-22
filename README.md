@@ -12,6 +12,7 @@ Created by Nick Lax.
 - **Cuisine and diet filters:** untick cuisines you never want (remembered on your device); vegetarian, vegan and gluten-free meals built only from items the menu tags that way. Not an allergy guarantee, and the page says so.
 - **Deals:** set prices, percent off, dollars off and kids eat free, applied only on their days, hours and ways to order. Each card shows the deal and how much it saves.
 - **App price estimator:** DoorDash and Uber Eats menu prices estimated from the restaurant's price plus an adjustable markup (default 20%), then typical fees. Always labeled "est."
+- **Deal check:** every deal is graded Real deal, Small saving or Not worth it, with reasons: savings versus the same order, versus the cheapest way to order without any deal, versus similar dishes nearby, and versus the item's recent prices.
 - **Kids' meals, card surcharges, to-go fees and opening hours** are counted when the menu states them.
 - **Reviews side by side:** links to each restaurant's Google, Yelp and Tripadvisor pages. Live ratings are planned.
 - **Data checklist** (`check.html`): which restaurants are due for a weekly check, with links to their website and social pages.
@@ -50,7 +51,7 @@ npm test
 | `data/austin-78745.js` | Real 78745 data the page uses |
 | `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
-| `tests/engine.test.js` | 33 engine tests (sample data) |
-| `tests/real-data.test.js` | 12 checks on the real data |
+| `tests/engine.test.js` | 38 engine tests (sample data) |
+| `tests/real-data.test.js` | 13 checks on the real data |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones and decisions |

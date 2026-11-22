@@ -174,6 +174,7 @@
         channelFees: { direct: { available: true, deliveryFee: 2.99 } },
         items: [
           { id: "bd-b", name: "Classic cheeseburger", dishType: "burger",
+            history: [{ date: "2026-10-15", direct: 7.0 }],
             portion: { serves: 0.75, source: "reports", reports: 9 },
             prices: { direct: 8.0, doordash: 9.75, ubereats: 9.95 } },
           { id: "bd-c", name: "Cheeseburger combo", dishType: "burger-combo",
