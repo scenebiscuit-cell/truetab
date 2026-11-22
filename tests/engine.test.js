@@ -235,3 +235,35 @@ test("budget minimum hides spots that come in under it and counts them", () => {
   assert.equal(ranged.results.length + ranged.hiddenBelow, all.results.length);
   for (const r of ranged.results) assert.ok(r.best.price.total >= 40);
 });
+
+/* ---------- Buy one, get one ---------- */
+
+const NOV = { day: 3, minutes: 12 * 60, date: "2026-11-25" };
+
+test("app BOGO adds a 2-for-1 item that feeds two for the price of one", () => {
+  const deals = M.activeDeals(data, "bun-n-done", "ubereats", NOV);
+  const items = M.itemsWithDeals(rest("bun-n-done").items, deals, "ubereats");
+  const two = items.find((i) => i.id === "bd-b--bogo");
+  assert.equal(two.prices.ubereats, 9.95);
+  assert.equal(two.deal.was, 19.9);
+  assert.equal(M.servesFor(two, data.dishTypes).serves, 1.5); // 2 x 0.75 from reports
+});
+
+test("BOGO only applies on its app, and stops after it expires", () => {
+  assert.equal(M.activeDeals(data, "bun-n-done", "doordash", NOV).length, 0);
+  assert.equal(M.activeDeals(data, "bun-n-done", "ubereats", { day: 3, minutes: 720, date: "2027-01-01" }).length, 0);
+});
+
+test("search uses the BOGO on Uber Eats and flags it", () => {
+  const out = M.search(data, { adults: 2, kids: 0, mode: "delivery", tipPct: 0.18, when: NOV });
+  const bd = out.results.find((r) => r.restaurant.id === "bun-n-done");
+  const ue = bd.options.find((o) => o.channelId === "ubereats");
+  assert.ok(ue.bogo);
+  assert.ok(ue.savings > 0);
+});
+
+test("deals-only filter keeps only spots whose best option has a deal or BOGO", () => {
+  const out = M.search(data, { adults: 2, kids: 0, mode: "delivery", tipPct: 0.18, when: NOV, dealsOnly: true });
+  assert.ok(out.results.length > 0);
+  for (const r of out.results) assert.ok(r.best.deals.length || r.best.bogo);
+});

@@ -50,7 +50,7 @@ npm test
 | `data/austin-78745.js` | Real 78745 data the page uses |
 | `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
-| `tests/engine.test.js` | 29 engine tests (sample data) |
-| `tests/real-data.test.js` | 11 checks on the real data |
+| `tests/engine.test.js` | 33 engine tests (sample data) |
+| `tests/real-data.test.js` | 12 checks on the real data |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones and decisions |

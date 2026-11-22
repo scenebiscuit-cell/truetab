@@ -186,3 +186,8 @@ a.brand { color: var(--ink); text-decoration: none; }
   border-radius: var(--radius-pill); color: var(--ink); text-decoration: none; font-size: 14px; }
 @media (hover: hover) { .review-link:hover { background: var(--paper-sunken); } }
 .deal-note { display: block; font-size: 14px; color: var(--ink-muted); }
+.tags { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-1); }
+.tag-bogo { background: var(--marker); color: var(--on-marker); font-weight: 600; }
+.inline-check { display: inline-flex !important; align-items: center; gap: var(--space-2); min-height: var(--target-min); font-weight: 600; cursor: pointer; }
+.inline-check input { width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--accent); }
+.bogo-count { color: var(--ink); }

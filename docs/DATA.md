@@ -61,7 +61,10 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 ```
 
 - `days`: 0 = Sunday through 6 = Saturday. `start` and `end` are 24-hour times; the end minute isn't included. Use `"00:00"` to `"24:00"` for all day.
-- `type`: `price` (the item costs `value`), `percent` (`value` off, 0.25 = 25%), `amountOff` (`value` dollars off each), `kids-free` (`perAdult` kids eat free per paying adult).
+- `type`: `price` (the item costs `value`), `percent` (`value` off, 0.25 = 25%), `amountOff` (`value` dollars off each), `kids-free` (`perAdult` kids eat free per paying adult), `bogo` (buy one, get one free on matching items).
+- `expires` (optional, `YYYY-MM-DD`): the last day the deal runs. Required for app promotions.
+- **App BOGOs** (DoorDash, Uber Eats): enter only what you see in the app yourself. Set `channels` to that app, `source` to "Seen in the Uber Eats app" (or DoorDash), `verified` to the date you saw it, and `expires` to the end date shown (or 7 days out if none is shown). Never collect them with a script.
+- A restaurant's own two-for-one items can also be regular items with `promo: "bogo"` and `portion.serves` for both orders.
 - `appliesTo`: `{ dishTypes: [...] }` or `{ itemIds: [...] }`. Not needed for `kids-free`.
 - `channels`: where it works. Most specials are dine-in or pickup only.
 - `source` (a link to where you saw it) and `verified` (the date you confirmed it) are required for real deals.

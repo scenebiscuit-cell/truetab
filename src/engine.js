@@ -61,6 +61,13 @@
   // How many adult portions an item covers, and how sure we are.
   // Order of trust: restaurant says > customer reports > Nick's default for the dish type.
   function servesFor(item, dishTypes) {
+    const base = baseServes(item, dishTypes);
+    const m = item.servesMultiplier || 1;
+    if (m === 1 || !base.serves) return base;
+    return Object.assign({}, base, { serves: base.serves * m, label: `${m} orders: ${base.label.charAt(0).toLowerCase()}${base.label.slice(1)}` });
+  }
+
+  function baseServes(item, dishTypes) {
     const p = item.portion || {};
     if (typeof p.serves === "number" && p.source === "restaurant") {
       return { serves: p.serves, source: "restaurant", label: `Serves ${fmtServes(p.serves)} (restaurant says)` };
@@ -152,7 +159,8 @@
         lineTotal: cents(options[i].price * qty),
         servesEach: options[i].serves,
         deal: options[i].item.deal || null,
-        estimated: !!options[i].item.estimatedPrice
+        estimated: !!options[i].item.estimatedPrice,
+        promo: options[i].item.promo || (options[i].item.deal && options[i].item.deal.type === "bogo" ? "bogo" : null)
       }))
       .sort((a, b) => b.lineTotal - a.lineTotal);
     return { lines, subtotal: cents(best[bestS]), portions: Math.round((bestS / RES) * 100) / 100 };
@@ -187,6 +195,7 @@
     if (!data.deals || !when) return [];
     return data.deals.filter((d) => {
       if (d.restaurantId !== restaurantId) return false;
+      if (d.expires && when.date && when.date > d.expires) return false;
       if (d.channels && !d.channels.includes(channelId)) return false;
       if (d.days && !d.days.includes(when.day)) return false;
       const start = d.start ? toMinutes(d.start) : 0;
@@ -212,8 +221,29 @@
   // Copies of the items with item deals applied to this channel's price.
   // Each discounted copy remembers which deal it used.
   function itemsWithDeals(items, deals, priceKey) {
-    const itemDeals = deals.filter((d) => d.type !== "kids-free");
-    if (!itemDeals.length) return items;
+    const bogos = deals.filter((d) => d.type === "bogo");
+    const itemDeals = deals.filter((d) => d.type !== "kids-free" && d.type !== "bogo");
+    const priced = itemDeals.length ? priceItemDeals(items, itemDeals, priceKey) : items;
+    if (!bogos.length) return priced;
+    // Buy one, get one: add a "2 for the price of 1" version of each matching item.
+    const extra = [];
+    for (const item of priced) {
+      const base = item.prices && item.prices[priceKey];
+      if (typeof base !== "number" || item.kidsOnly) continue;
+      const d = bogos.find((b) => dealMatchesItem(b, item));
+      if (!d) continue;
+      extra.push(Object.assign({}, item, {
+        id: item.id + "--bogo",
+        name: item.name + ", buy one get one",
+        servesMultiplier: 2,
+        prices: Object.assign({}, item.prices, { [priceKey]: base }),
+        deal: { id: d.id, title: d.title, was: cents(base * 2), type: "bogo" }
+      }));
+    }
+    return priced.concat(extra);
+  }
+
+  function priceItemDeals(items, itemDeals, priceKey) {
     return items.map((item) => {
       const base = item.prices && item.prices[priceKey];
       if (typeof base !== "number") return item;
@@ -227,7 +257,7 @@
       if (!used) return item;
       return Object.assign({}, item, {
         prices: Object.assign({}, item.prices, { [priceKey]: cents(best) }),
-        deal: { id: used.id, title: used.title, was: base }
+        deal: { id: used.id, title: used.title, was: base, type: used.type }
       });
     });
   }
@@ -373,7 +403,8 @@
           price,
           perPerson: people ? cents(price.total / people) : price.total,
           confidence: orderConfidence(order.lines),
-          deals: usedDeals.map((d) => ({ id: d.id, title: d.title, note: d.note || null })),
+          deals: usedDeals.map((d) => ({ id: d.id, title: d.title, note: d.note || null, type: d.type, channels: d.channels || null })),
+          bogo: order.lines.some((l) => l.promo === "bogo"),
           freeKids,
           savings: cents(basePrice.total - price.total),
           estimated: order.lines.some((l) => l.estimated),
@@ -383,6 +414,7 @@
       if (!options.length) continue;
       options.sort((a, b) => a.price.total - b.price.total);
       const best = options[0];
+      if (query.dealsOnly && !best.deals.length && !best.bogo) continue;
       if (query.budgetMin && best.price.total < query.budgetMin - 1e-9) {
         hiddenBelow++;
         continue;

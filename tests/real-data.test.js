@@ -102,3 +102,9 @@ test("with no ratings, results sort by price", () => {
     }
   }
 });
+
+test("Super Bowl's own two-for-one plates are flagged as BOGO", () => {
+  const out = M.search(real, { adults: 2, kids: 2, mode: "pickup" });
+  const sb = out.results.find((x) => x.restaurant.id === "super-bowl");
+  assert.ok(sb.best.bogo);
+});

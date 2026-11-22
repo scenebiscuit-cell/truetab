@@ -70,7 +70,11 @@
     groups: { tacos: "Tacos and Tex-Mex", burgers: "Burgers", cajun: "Cajun", plates: "Plates", asian: "Asian", kids: "Kids" },
     dietTags: { vegetarian: "Vegetarian", vegan: "Vegan", "gluten-free": "Gluten-free" },
 
-    /* Deals as each restaurant's menu states them. */
+    /*
+     * Deals as each restaurant's menu states them. App promotions (type "bogo" with channels
+     * ["doordash"] or ["ubereats"]) are entered by hand from what Nick sees in the app, with
+     * source "Seen in the <app> app", the date seen, and an expires date.
+     */
     deals: [
       { id: "ev-lunch-3", restaurantId: "evangeline-cafe",
         title: "Lunch special #3: gumbo, red beans & rice or jambalaya with a side salad, $10.99",
@@ -210,11 +214,11 @@
           { id: "sb-small", name: "All-day special (smaller portion, rice, egg roll)", dishType: "small-plate", prices: { direct: 8.95 } },
           { id: "sb-combo2", name: "Dinner combo for 2 (2 plates, rice, 2 soups, 2 egg rolls)", dishType: "meal-for-2",
             portion: { serves: 2, source: "restaurant" }, prices: { direct: 21.0 } },
-          { id: "sb-bogo-sesame", name: "Sesame chicken, 2 orders (buy one get one)", dishType: "meal-for-2",
+          { id: "sb-bogo-sesame", promo: "bogo", name: "Sesame chicken, 2 orders (buy one get one)", dishType: "meal-for-2",
             portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } },
-          { id: "sb-bogo-fr", name: "Fried rice plate, 2 orders (buy one get one)", dishType: "meal-for-2",
+          { id: "sb-bogo-fr", promo: "bogo", name: "Fried rice plate, 2 orders (buy one get one)", dishType: "meal-for-2",
             portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } },
-          { id: "sb-bogo-pho", name: "Pho, 2 orders (buy one get one)", dishType: "meal-for-2",
+          { id: "sb-bogo-pho", promo: "bogo", name: "Pho, 2 orders (buy one get one)", dishType: "meal-for-2",
             portion: { serves: 2, source: "restaurant" }, prices: { direct: 14.95 } },
           { id: "sb-eggroll", name: "Vegetable egg roll", dishType: "spring-rolls", prices: { direct: 1.8 } }
         ]

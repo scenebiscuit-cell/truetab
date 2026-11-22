@@ -114,12 +114,19 @@
       timeField.hidden = true;
       const d = new Date();
       $("when-help").textContent = `Deals running now (${DAYS[d.getDay()]} ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}) are included.`;
-      return { day: d.getDay(), minutes: d.getHours() * 60 + d.getMinutes() };
+      return { day: d.getDay(), minutes: d.getHours() * 60 + d.getMinutes(), date: isoDate(d) };
     }
     timeField.hidden = false;
     $("when-help").textContent = "Deals running then are included.";
     const t = $("when-time").value || "18:00";
-    return { day: Number(day), minutes: M.toMinutes(t) };
+    // The next date that falls on the chosen day, so deals past their end date drop off.
+    const next = new Date();
+    next.setDate(next.getDate() + ((Number(day) - next.getDay() + 7) % 7));
+    return { day: Number(day), minutes: M.toMinutes(t), date: isoDate(next) };
+  }
+  function isoDate(d) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   function readQuery() {
@@ -139,6 +146,7 @@
       sort: $("sort").value,
       tipPct: parseFloat($("tip").value),
       markupPct: parseFloat($("markup").value),
+      dealsOnly: $("deals-only").checked,
       when: readWhen()
     };
   }
@@ -165,10 +173,15 @@
         ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spots fit ${range} all-in.`]
         : [`${out.results.length} spots.`]),
       out.hiddenBelow ? ` ${out.hiddenBelow} cheaper spot${out.hiddenBelow === 1 ? "" : "s"} hidden by your minimum.` : "",
-      out.closedNow ? ` ${out.closedNow} closed then.` : ""
+      out.closedNow ? ` ${out.closedNow} closed then.` : "",
+      (() => {
+        const n = out.results.filter((x) => x.best.bogo).length;
+        return n ? el("strong", { class: "bogo-count" }, ` ${n} with buy-one-get-one.`) : "";
+      })()
     );
     if (!out.results.length) {
-      const why = q.cuisines.length === 0 ? "No cuisines are selected." : "Nothing matches.";
+      const why = q.cuisines.length === 0 ? "No cuisines are selected."
+        : q.dealsOnly ? "No deals or buy-one-get-one offers match right now." : "Nothing matches.";
       box.append(el("div", { class: "empty" }, el("p", {}, `${why} Try more cuisines, a different diet setting, or another way to eat.`)));
       return;
     }
@@ -238,7 +251,9 @@
               ? ` · ${rating.stars.toFixed(1)} stars (${rating.count.toLocaleString()} ${rating.source} ratings)` : "",
             r.restaurant.address ? el("span", { class: "addr" }, r.restaurant.address) : null)
         ),
-        el("span", { class: `tag ${st.cls}` }, st.text)
+        el("div", { class: "tags" },
+          el("span", { class: `tag ${st.cls}` }, st.text),
+          b.bogo ? el("span", { class: "tag tag-bogo" }, "BOGO") : null)
       ),
       el("div", { class: "price-row" },
         el("span", { class: "price" }, "est. " + money(p.total)),
@@ -248,6 +263,9 @@
         b.freeKids
           ? `. Buys ${fmt(b.order.portions)} adult portions; ${b.freeKids} kids' meal${b.freeKids === 1 ? " is" : "s are"} free.`
           : `. Feeds ${portionWord(b.order.portions)}` + (extra > 0.05 ? ` (${fmt(extra)} extra).` : ".")),
+      b.bogo && !b.deals.some((d) => d.type === "bogo")
+        ? el("p", { class: "deal" }, el("strong", {}, "Buy one, get one: "), "two-for-one plates on the restaurant's own menu.")
+        : null,
       b.deals.length
         ? el("p", { class: "deal" },
             el("strong", {}, "Deal: "), b.deals.map((d) => d.title).join(" · "),
