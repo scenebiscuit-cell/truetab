@@ -31,6 +31,8 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - [ ] **M5 Fuzzy dish matching.** AI suggests the `dishType` for new items; Nick approves. Accuracy on items it hasn't seen.
 - [ ] **M6 Restaurant submissions.** "Submit your special" form for restaurants; each one is verified, then shown with a "Verified" badge.
 - [ ] **M7 Portion reports and change alerts.** "How many people did this feed?" after a visit; flags when a price rises, a portion shrinks or a special disappears between checks.
+- [ ] **D1 Drinks (later).** Happy hours as time-based deals (Do512 and happy-hour sites as leads, verified with the restaurant); an optional "add a drink each" to the all-in total; the deal check for drink specials; drinks compared per drink or per ounce, not food portions. Framing stays on value ("best happy-hour deals with food"), never on volume. Never counted for kids. Dine-in and pickup first; look up Texas rules on alcohol delivery before adding delivery prices for drinks.
+  *Check:* a weekday 4–6 pm search shows happy-hour specials with verdicts, and "add a drink each" changes the all-in total.
 - [ ] **Later ideas:** pickup-savings callouts with distance, lunch vs. dinner price flags, delivery subscription calculator, leftovers counted as value, drinks and add-ons toggle, catering trays for 10+.
 
 ## How data is gathered (sourcing rules)
@@ -53,7 +55,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Diet tags are what the menu says. The page tells people to confirm allergies with the restaurant.
 - 2026-11-22: Budget minimum hides spots under it and says how many were hidden.
 - 2026-11-22: Working name "Menu Math".
-- 2026-11-23: Renamed to **TrueTab** ("the true total of your tab"), repo `truetab`. Before launch: check the domain on Cloudflare and run a USPTO trademark search.
+- 2026-11-23: Renamed to **TrueTab** ("the true total of your tab"), repo `truetab`. "Tab" also points toward bars, which fits Austin and leaves room for drinks (D1). Before launch: check the domain on Cloudflare and run a USPTO trademark search.
 - 2026-11-22: Real data starts in 78745. Prices come only from restaurants' own websites and Toast ordering pages. Menus that don't list prices are left out, never guessed.
 - 2026-11-22: Family meals that say "feeds 4–6" count as 4 (the low end), with the menu's wording kept in a note.
 - 2026-11-22: Kids-only items (kids' meals) are used one per kid when that's cheaper, and never count toward feeding adults.

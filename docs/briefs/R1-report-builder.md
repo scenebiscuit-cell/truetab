@@ -4,7 +4,7 @@ Work in `C:\Projects\truetab`. Read `CLAUDE.md`, `README.md`, `PLAN.md`, `docs/D
 
 ## Step 0: get the project onto GitHub (stop after this step)
 
-The folder came from a zip and already has Git history on branch `m1-prototype` (8 commits). There is no `main` yet and no GitHub repo.
+The folder came from a zip and already has Git history on branch `m1-prototype` (9 commits). There is no `main` yet and no GitHub repo.
 
 1. Check `git status` and `git log --oneline` on `m1-prototype`.
 2. Create a local `main` with one empty commit ("Initial commit"), then rebase `m1-prototype` onto it so the branch has a base to open a pull request against.
