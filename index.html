@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueTab: what your budget actually gets you in Austin</title>
+  <meta name="description" content="Compare Austin restaurant prices across pickup and delivery apps, all-in, for one person or a whole family.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-23">
+  <script>
+    // Pick the theme before the page paints, so it never flashes the wrong one.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("truetab-theme"); } catch (e) {}
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#results">Skip to results</a>
+
+  <header class="top">
+    <div class="wrap top-row">
+      <span class="brand">TrueTab</span>
+      <button type="button" class="btn btn-ghost" id="theme-toggle" aria-pressed="false">Dark theme</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap">
+      <p class="eyebrow" id="area-label">Austin 78745 · dine-in, pickup, delivery</p>
+      <h1>What does your budget <span class="mark">actually</span> get you?</h1>
+      <p class="lead">Set a budget and who you're feeding. TrueTab finds the cheapest way to feed everyone at each spot, with delivery fees, service fees, tax and tip already counted.</p>
+      <p class="notice" role="note" id="data-notice"><strong>Real 78745 menu prices</strong>, copied from each restaurant's own website or ordering page on Nov 22, 2026. DoorDash and Uber Eats prices aren't collected: they're <strong>estimated</strong> from the restaurant's price plus a typical app markup and typical fees. Check the restaurant before you go.</p>
+    </section>
+
+    <div class="wrap tabs" role="tablist" aria-label="Views">
+      <button type="button" class="tab" id="tab-feed" aria-selected="true" aria-controls="view-feed" role="tab">Feed my group</button>
+      <button type="button" class="tab" id="tab-dish" aria-selected="false" aria-controls="view-dish" role="tab">Compare a dish</button>
+    </div>
+
+    <!-- Feed my group -->
+    <section class="wrap view" id="view-feed" role="tabpanel" aria-labelledby="tab-feed">
+      <form class="controls" id="feed-form" novalidate>
+        <div class="field">
+          <label for="budget-min">Spend at least</label>
+          <div class="money"><span aria-hidden="true">$</span><input id="budget-min" name="budgetMin" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+          <p class="help">All-in. 0 means no minimum.</p>
+        </div>
+        <div class="field">
+          <label for="budget">Spend up to</label>
+          <div class="money"><span aria-hidden="true">$</span><input id="budget" name="budget" type="number" inputmode="decimal" min="0" step="1" value="40"></div>
+          <p class="help">All-in. 0 means no limit.</p>
+        </div>
+        <div class="field">
+          <label for="adults">Adults</label>
+          <input id="adults" name="adults" type="number" inputmode="numeric" min="0" max="20" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="kids">Kids</label>
+          <input id="kids" name="kids" type="number" inputmode="numeric" min="0" max="20" step="1" value="2">
+          <p class="help">A kid counts as 0.6 of an adult portion.</p>
+        </div>
+        <div class="field">
+          <label for="mode">How you'll eat</label>
+          <select id="mode" name="mode">
+            <option value="any">Any way</option>
+            <option value="takeout">Pickup or delivery</option>
+            <option value="pickup">Pickup only</option>
+            <option value="delivery">Delivery only</option>
+            <option value="dine-in">Dine in</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="when-day">When</label>
+          <select id="when-day" name="whenDay">
+            <option value="now">Right now</option>
+            <option value="0">Sunday</option>
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+          </select>
+          <p class="help" id="when-help">Deals running now are included.</p>
+        </div>
+        <div class="field" id="when-time-field" hidden>
+          <label for="when-time">Time</label>
+          <input id="when-time" name="whenTime" type="time" value="18:00">
+        </div>
+        <div class="field">
+          <label for="sort">Sort by</label>
+          <select id="sort" name="sort">
+            <option value="value">Best value</option>
+            <option value="cheapest">Cheapest</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tip">Tip</label>
+          <select id="tip" name="tip">
+            <option value="0.15">15%</option>
+            <option value="0.18" selected>18%</option>
+            <option value="0.2">20%</option>
+            <option value="0">No tip</option>
+          </select>
+          <p class="help">Dine-in and delivery. Pickup has none.</p>
+        </div>
+        <div class="field">
+          <label for="markup">App menu markup</label>
+          <select id="markup" name="markup">
+            <option value="0">0% (same as restaurant)</option>
+            <option value="0.1">10%</option>
+            <option value="0.15">15%</option>
+            <option value="0.2" selected>20% (typical)</option>
+            <option value="0.25">25%</option>
+            <option value="0.3">30%</option>
+          </select>
+          <p class="help">How much higher DoorDash and Uber Eats menu prices are assumed to be.</p>
+        </div>
+
+        <div class="field wide">
+          <label class="inline-check"><input type="checkbox" id="deals-only" name="dealsOnly"> Only show spots with a deal or buy-one-get-one right now</label>
+        </div>
+
+        <fieldset class="field wide checks" id="cuisine-field">
+          <legend>Cuisines</legend>
+          <div class="check-row" id="cuisine-list"></div>
+          <div class="check-actions">
+            <button type="button" class="btn btn-small" id="cuisine-all">Select all</button>
+            <button type="button" class="btn btn-small" id="cuisine-none">Clear all</button>
+          </div>
+          <p class="help">Untick anything you never want to see. Your choices are remembered on this device.</p>
+        </fieldset>
+
+        <fieldset class="field wide checks">
+          <legend>Diet</legend>
+          <div class="check-row" id="diet-list"></div>
+          <p class="help">Based on what each menu says. If you have an allergy, confirm with the restaurant.</p>
+        </fieldset>
+      </form>
+
+      <p class="summary" id="feed-summary" aria-live="polite"></p>
+      <h2 class="sr-only">Results</h2>
+      <div id="results" class="results"></div>
+    </section>
+
+    <!-- Compare a dish -->
+    <section class="wrap view" id="view-dish" role="tabpanel" aria-labelledby="tab-dish" hidden>
+      <form class="controls" id="dish-form" novalidate>
+        <div class="field">
+          <label for="dish">Dish</label>
+          <select id="dish" name="dish"></select>
+        </div>
+        <div class="field">
+          <label for="price-on">Price on</label>
+          <select id="price-on" name="priceOn"></select>
+        </div>
+      </form>
+      <p class="summary" id="dish-summary" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="dish-table" id="dish-table">
+          <thead>
+            <tr><th scope="col">Item</th><th scope="col">Price</th><th scope="col">Per portion</th><th scope="col">Portion</th><th scope="col">Compared</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="wrap how">
+      <h2>How the numbers work</h2>
+      <ul>
+        <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
+        <li><strong>Portions</strong> come from what the restaurant says first, then customer reports, then a typical amount for that kind of dish. Every card says which one it used.</li>
+        <li><strong>Restaurant prices are real</strong>, from each restaurant's own menu or ordering page, with the date they were checked. Restaurant-specific charges, like a card surcharge or a to-go container fee, are included when the menu states them.</li>
+        <li><strong>App prices are estimates.</strong> Restaurants often price items higher on DoorDash and Uber Eats; an industry study put the average near 20%. TrueTab adds your chosen markup and typical fees. Real fees change with distance, time and promotions.</li>
+        <li><strong>Fair for every restaurant.</strong> Rankings and deal verdicts come only from this math, the same way for every restaurant. Nobody can pay to change a ranking, a price or a verdict. Anything paid will be labeled.</li>
+        <li><strong>Reviews</strong> link to each restaurant's Google, Yelp and Tripadvisor pages side by side. Live star ratings are planned.</li>
+        <li><strong>Buy one, get one</strong> deals are marked with a BOGO badge. Restaurant BOGOs come from their menus; DoorDash and Uber Eats BOGOs are entered by hand when seen in the app, with an end date, and disappear when they expire.</li>
+        <li><strong>Deal check</strong> grades every deal: <em>Real deal</em> (saves 10% or more with no warning signs), <em>Small saving</em>, or <em>Not worth it</em>. It compares the deal with the same order without it, with the cheapest way to order without any deal, with similar dishes nearby, and with the restaurant's recent prices.</li>
+        <li><strong>Deals</strong> count only on the days, hours and ways to order they apply to. TrueTab works out the order with and without the deal and keeps the cheaper one.</li>
+        <li><strong>Best value</strong> compares rating to cost per person. A 3-star place adds no value; each star above that does.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>Created by Nick Lax · Real 78745 menu data, checked Nov 22, 2026 · Not affiliated with any delivery app · <a href="check.html">Data checklist</a></p>
+    </div>
+  </footer>
+
+  <script src="data/austin-78745.js?v=2026-11-23"></script>
+  <script src="src/engine.js?v=2026-11-23"></script>
+  <script src="src/app.js?v=2026-11-23"></script>
+</body>
+</html>

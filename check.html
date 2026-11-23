@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueTab: data checklist</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-22c">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("truetab-theme"); } catch (e) {}
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="index.html">TrueTab</a>
+      <span class="label" style="margin:0">Data checklist</span>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top: var(--space-7); padding-bottom: var(--space-8)">
+    <h1 style="font-size: var(--fluid-title-2); max-width: none">Who's due for a check</h1>
+    <p class="lead" style="font-size:16px">Oldest checks first. Open each source, compare prices and specials with the data, update it, and set <code>lastChecked</code> to today. Read sources by hand; never run scripts against them.</p>
+    <p class="summary" id="check-summary"></p>
+    <div class="table-wrap">
+      <table class="dish-table" id="check-table">
+        <thead>
+          <tr><th scope="col">Restaurant</th><th scope="col">Last checked</th><th scope="col">Sources</th><th scope="col">Deals on file</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="foot"><div class="wrap"><p>Created by Nick Lax · <a href="index.html">Back to TrueTab</a></p></div></footer>
+
+  <script src="data/austin-78745.js?v=2026-11-22c"></script>
+  <script>
+  {
+    const data = window.MENU_DATA;
+    const DUE_DAYS = 7;
+    const today = new Date();
+    const SOURCE_NAMES = { website: "Website", toast: "Toast", instagram: "Instagram", facebook: "Facebook", do512: "Do512" };
+    const daysSince = (iso) => Math.floor((today - new Date(iso + "T12:00:00")) / 86400000);
+
+    function el(tag, attrs, ...kids) {
+      const n = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) if (v != null) k === "class" ? (n.className = v) : n.setAttribute(k, v);
+      for (const k of kids.flat()) if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+      return n;
+    }
+
+    const rows = data.restaurants
+      .map((r) => ({ r, age: r.lastChecked ? daysSince(r.lastChecked) : Infinity }))
+      .sort((a, b) => b.age - a.age);
+    const due = rows.filter((x) => x.age >= DUE_DAYS).length;
+    document.getElementById("check-summary").textContent =
+      `${due} of ${rows.length} restaurants are due (not checked in ${DUE_DAYS}+ days).` + (data.meta.isSample ? " Sample data: links are empty." : " Add Instagram and Facebook links as you find them.");
+
+    const body = document.querySelector("#check-table tbody");
+    for (const { r, age } of rows) {
+      const links = Object.entries(SOURCE_NAMES).map(([key, label]) => {
+        const url = r.sources && r.sources[key];
+        return url
+          ? el("a", { href: url, target: "_blank", rel: "noopener" }, label)
+          : el("span", { class: "sub", style: "display:inline" }, label + ": none");
+      });
+      const deals = (data.deals || []).filter((d) => d.restaurantId === r.id);
+      body.append(el("tr", {},
+        el("td", {}, r.name, el("span", { class: "sub" }, r.neighborhood + " · " + (r.cuisines || []).join(", "))),
+        el("td", {},
+          r.lastChecked || "Never",
+          el("span", { class: "sub" }, age === Infinity ? "" : `${age} day${age === 1 ? "" : "s"} ago`),
+          age >= DUE_DAYS ? el("span", { class: "tag tag-just-over" }, "Due") : el("span", { class: "tag tag-fits" }, "Current")),
+        el("td", {}, links.flatMap((l, i) => (i ? [" · ", l] : [l]))),
+        el("td", {}, deals.length
+          ? deals.map((d) => el("span", { class: "sub", style: "display:block" }, `${d.title} (verified ${d.verified})`))
+          : el("span", { class: "sub" }, "None"))
+      ));
+    }
+  }
+  </script>
+</body>
+</html>
