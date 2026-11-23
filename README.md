@@ -54,4 +54,5 @@ npm test
 | `tests/engine.test.js` | 38 engine tests (sample data) |
 | `tests/real-data.test.js` | 13 checks on the real data |
 | `docs/DATA.md` | The data format and how to collect real data |
-| `PLAN.md` | Milestones and decisions |
+| `PLAN.md` | Milestones, decisions and the money plan |
+| `PITCH.md` | Restaurant report listing, outreach message and sample report |

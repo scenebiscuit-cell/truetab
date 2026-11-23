@@ -22,6 +22,8 @@ Help people in Austin find the best meal for their money at any budget, from a $
   *Check:* an app BOGO that costs more than plain pickup shows "Not worth it" with the pickup price.
 - [ ] **M2c Reviews side by side.** Built: each card links to the restaurant's Google, Yelp and Tripadvisor pages. Next: show live star ratings and review counts side by side through a small Cloudflare Worker (like Pharos's) calling each site's official API with its required branding and caching limits. Google Places API (usage-based billing), Yelp Fusion API (paid plans only), Tripadvisor Content API (apply for access). Ratings are never copied into the data files.
   *Check:* a card shows three ratings, each with its site's logo and a link, and the data files still contain no ratings.
+- [ ] **R1 Restaurant report builder.** `report.html` + `src/report.js`: ranks for 1 adult and a family of 4 (lunch and dinner), app vs. pickup gap, promo check with verdicts, portion clarity, and up to 3 tested suggestions, with competitors anonymized by default and print-to-PDF styles. Brief for Claude Code: `docs/briefs/R1-report-builder.md`. Built before the pitch in `PITCH.md` goes out.
+  *Check:* print Super Bowl's report to PDF: about 2 pages, ranks shown, two-for-one graded "Real deal", competitors anonymized, "How this was measured" at the end.
 - [ ] **M3 Go live.** Publish on GitHub Pages; add the portfolio card; share the first "biggest gap" post.
   *Check:* the live link works on a phone.
 - [ ] **M4 AI-assisted entry.** Paste a menu, caption or screenshot you found; AI turns it into prices or a deal in the data format; Nick approves each one before it's saved, with the source link and date.
@@ -60,6 +62,23 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Deal verdict thresholds: "Real deal" needs 10%+ savings with no warning signs; a price rise in the 60 days before the deal, or a deal price above the typical price for similar dishes, drops it to "Small saving"; anything that loses to ordering without a deal is "Not worth it". "Typical" needs at least two items of that dish type.
 - 2026-11-22: Restaurants are hidden when closed at the chosen time; ones without hours on file are shown.
 
-## Money ideas (not built)
+## Making money
 
-Restaurant price reports (fastest), content plus newsletter, sponsors, restaurant partnerships for direct ordering and featured specials. Affiliate links only if disclosed and never allowed to change rankings.
+**The rule that protects everything:** rankings and deal verdicts come only from the published math (all-in price per person, portions, deals, ratings once live). Money never changes a ranking, a verdict or a price. Anything paid is labeled. A paying restaurant's deal can still be called "Not worth it."
+
+**Why this isn't bias:** the app openly favors the best value per person, by one written rule applied to every restaurant the same way. That's the product, like a review site favoring good food. Bias would be pay-to-rank, which the rule above forbids.
+
+**Who buys:** mostly restaurants that rank *low*. The report shows them exactly why and how to move up (a family pack, a pickup deal, fixing a promo that loses to their own pickup price). Restaurants that already rank well buy featured placement or referrals later.
+
+| Order | Stream | What it is | Needs |
+|---|---|---|---|
+| 1 | Weekly content | "78745 Real Deals" post or newsletter: real deals and deal traps, from the verdicts | Nothing; free. Builds the audience |
+| 2 | Restaurant reports | One-time report: menu value vs. 5 nearby spots, app vs. pickup pricing, promo check, 3 specific fixes. Sold on Upwork/Contra and by direct outreach (`PITCH.md`) | Verified data for the area |
+| 3 | Re-check | Monthly re-check after changes: did the fixes move them up? | Report customers |
+| 4 | Direct-ordering referrals | Monthly fee or per-referral fee for sending customers to the restaurant's own ordering page (tracked links) | Traffic |
+| 5 | Featured verified deals | Labeled "Featured" spot for a verified special; same deal check applies | Traffic |
+| 6 | Local price trends | "South Austin menu price index" and shrinkflation stories for local media; data for restaurant groups | Months of price history |
+
+**Not doing:** DoorDash/Uber Eats affiliate money (the app regularly says their deals lose to pickup), paid consumer subscriptions (low willingness to pay), selling higher rankings.
+
+**Prices:** not set. Suggested to test: an intro report price for the first 2–3 restaurants in exchange for a testimonial, then a standard price. Nick decides.
