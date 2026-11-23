@@ -1,6 +1,6 @@
 /*
  * REAL DATA: Austin 78745. Menu prices copied by hand from each restaurant's own website
- * or its own Toast ordering page on 2026-11-22. Each restaurant lists its source.
+ * or its own Toast ordering page on 2026-11-22 (Bee Dumpling: its own site, 2026-11-23). Each restaurant lists its source.
  * - No prices from DoorDash, Uber Eats or other apps. App prices are ESTIMATED by the page
  *   from the restaurant's price plus a typical markup, and labeled as estimates.
  * - No ratings are stored (Google, Yelp and Tripadvisor terms restrict that). Cards link out instead.
@@ -64,6 +64,8 @@
       "small-plate":      { label: "Small plate",               group: "plates",  defaultServes: 0.75 },
       "meal-for-2":       { label: "Meal for two",              group: "plates",  defaultServes: 2 },
       "noodle-bowl":      { label: "Noodle bowl or pho",        group: "asian",   defaultServes: 1 },
+      "dumplings":        { label: "Dumplings or pot stickers (8)", group: "asian", defaultServes: 1 },
+      "soup-dumplings":   { label: "Soup dumplings",            group: "asian",   defaultServes: 0.75 },
       "spring-rolls":     { label: "Spring or egg rolls",       group: "asian",   defaultServes: 0 },
       "kids-meal":        { label: "Kids' meal",                group: "kids",    defaultServes: 0.6 }
     },
@@ -197,30 +199,38 @@
         ]
       },
       {
-        id: "super-bowl", name: "Super Bowl Restaurant", neighborhood: "W William Cannon", address: "719 W William Cannon Dr #103, Austin, TX 78745",
+        // Prices copied by hand from the restaurant's own site on 2026-11-23. The page still shows an old
+        // "opening May 6th" banner; reviews from late 2025 say it is open. Nick: confirm on a visit.
+        // Left out: drinks, white rice, dim sum, appetizers other than egg rolls, and same-priced flavor variants.
+        // No item says how many people it feeds, so every portion is the dish-type estimate.
+        id: "bee-dumpling", name: "Bee Dumpling", neighborhood: "W William Cannon", address: "1901 W William Cannon Dr #115, Austin, TX 78745",
         group: "asian", cuisines: ["Chinese"],
-        onApps: ["ubereats"],
-        hours: null,
-        sources: { website: null, toast: "https://order.toasttab.com/online/super-bowl-719-west-william-cannon-drive-suite-103", instagram: null, facebook: null, do512: null },
-        lastChecked: COLLECTED, verifiedBy: null, rating: null,
+        onApps: ["doordash"],
+        hours: { 0: [["11:00", "22:30"]], 1: [["11:00", "22:30"]], 2: [["11:00", "22:30"]], 3: [["11:00", "22:30"]],
+                 4: [["11:00", "22:30"]], 5: [["11:00", "22:30"]], 6: [["11:00", "22:30"]] },
+        sources: { website: "https://beedumplingtx.com/menu/99866285", toast: null, instagram: null, facebook: null, do512: null },
+        lastChecked: "2026-11-23", verifiedBy: null, rating: null,
         channelFees: {},
         items: [
-          { id: "sb-sesame", name: "Sesame chicken with white rice", dishType: "entree", prices: { direct: 9.49 } },
-          { id: "sb-mongolian", name: "Mongolian beef with white rice", dishType: "entree", prices: { direct: 9.99 } },
-          { id: "sb-lomein", name: "Lo mein", dishType: "entree", prices: { direct: 9.69 } },
-          { id: "sb-fr", name: "Fried rice", dishType: "entree", prices: { direct: 9.69 } },
-          { id: "sb-pho", name: "Pho", dishType: "noodle-bowl", prices: { direct: 9.99 } },
-          { id: "sb-padthai", name: "Pad thai", dishType: "noodle-bowl", prices: { direct: 9.65 } },
-          { id: "sb-small", name: "All-day special (smaller portion, rice, egg roll)", dishType: "small-plate", prices: { direct: 8.95 } },
-          { id: "sb-combo2", name: "Dinner combo for 2 (2 plates, rice, 2 soups, 2 egg rolls)", dishType: "meal-for-2",
-            portion: { serves: 2, source: "restaurant" }, prices: { direct: 21.0 } },
-          { id: "sb-bogo-sesame", promo: "bogo", pairOf: "sb-sesame", name: "Sesame chicken, 2 orders (buy one get one)", dishType: "meal-for-2",
-            portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } },
-          { id: "sb-bogo-fr", promo: "bogo", pairOf: "sb-fr", name: "Fried rice plate, 2 orders (buy one get one)", dishType: "meal-for-2",
-            portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } },
-          { id: "sb-bogo-pho", promo: "bogo", pairOf: "sb-pho", name: "Pho, 2 orders (buy one get one)", dishType: "meal-for-2",
-            portion: { serves: 2, source: "restaurant" }, prices: { direct: 14.95 } },
-          { id: "sb-eggroll", name: "Vegetable egg roll", dishType: "spring-rolls", prices: { direct: 1.8 } }
+          { id: "bd-dump-pork", name: "Pork & bok choy dumplings (8)", dishType: "dumplings", prices: { direct: 11.99 } },
+          { id: "bd-dump-chicken", name: "Chicken & corn dumplings (8)", dishType: "dumplings", prices: { direct: 11.99 } },
+          { id: "bd-dump-veg", name: "Vegetable dumplings (8)", dishType: "dumplings", tags: ["vegetarian"], prices: { direct: 10.99 } },
+          { id: "bd-pot-pork", name: "Pork & bok choy pot stickers (8)", dishType: "dumplings", prices: { direct: 11.99 } },
+          { id: "bd-pot-veg", name: "Vegetable pot stickers (8)", dishType: "dumplings", tags: ["vegetarian"], prices: { direct: 10.99 } },
+          { id: "bd-xlb-pork", name: "Pork soup dumplings", dishType: "soup-dumplings", prices: { direct: 11.99 } },
+          { id: "bd-xlb-crab", name: "Crab meat soup dumplings", dishType: "soup-dumplings", prices: { direct: 13.99 } },
+          { id: "bd-cm-chicken", name: "Chicken chow mein", dishType: "entree", prices: { direct: 12.99 } },
+          { id: "bd-cm-veg", name: "Vegetable chow mein", dishType: "entree", tags: ["vegetarian"], prices: { direct: 12.99 } },
+          { id: "bd-scallion-noodle", name: "Shanghai-style scallion oil noodles", dishType: "entree", prices: { direct: 12.99 } },
+          { id: "bd-fr-chicken", name: "Chicken fried rice", dishType: "entree", prices: { direct: 12.99 } },
+          { id: "bd-fr-yangzhou", name: "Yangzhou fried rice", dishType: "entree", prices: { direct: 13.99 } },
+          { id: "bd-noodle-beef", name: "Braised beef noodle soup", dishType: "noodle-bowl", prices: { direct: 13.99 } },
+          { id: "bd-wonton-soup", name: "Wonton soup (10)", dishType: "noodle-bowl", prices: { direct: 10.99 } },
+          { id: "bd-kungpao", name: "Kung pao chicken", dishType: "entree", prices: { direct: 13.99 } },
+          { id: "bd-orange", name: "Orange chicken", dishType: "entree", prices: { direct: 13.99 } },
+          { id: "bd-mongolian", name: "Mongolian beef", dishType: "entree", prices: { direct: 13.99 } },
+          { id: "bd-mapo", name: "Mapo tofu", dishType: "entree", prices: { direct: 12.99 } },
+          { id: "bd-eggroll", name: "Egg rolls (4)", dishType: "spring-rolls", prices: { direct: 6.0 } }
         ]
       }
     ]

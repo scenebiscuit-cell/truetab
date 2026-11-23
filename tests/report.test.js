@@ -8,6 +8,21 @@ const DATE = "2026-11-23";
 const ids = real.restaurants.map((x) => x.id);
 const snapshot = () => JSON.parse(JSON.stringify(real));
 
+// No real 78745 spot has its own two-for-one item right now, so promo tests add a made-up "(sample)" spot to a copy of the data.
+function withTwinPlate() {
+  const data = snapshot();
+  data.restaurants.push({
+    id: "twin-plate", name: "Twin Plate (sample)", neighborhood: "Sample", address: "Sample address, Austin, TX 78745",
+    group: "plates", cuisines: ["Chinese"], onApps: [], hours: null, sources: {}, lastChecked: DATE, rating: null, channelFees: {},
+    items: [
+      { id: "tp-plate", name: "Chicken plate (sample)", dishType: "entree", prices: { direct: 9.49 } },
+      { id: "tp-bogo", promo: "bogo", pairOf: "tp-plate", name: "Chicken plate, 2 orders, buy one get one (sample)", dishType: "meal-for-2",
+        portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } }
+    ]
+  });
+  return data;
+}
+
 test("ranks are 1-based, never exceed the count, and name the cheapest competitor", () => {
   for (const id of ids) {
     for (const s of Object.keys(R.SCENARIOS)) {
@@ -27,21 +42,19 @@ test("ranks are 1-based, never exceed the count, and name the cheapest competito
   }
 });
 
-test("Super Bowl ranks 2nd of 6 for 1 adult and a family of 4 at pickup", () => {
-  const adult = R.rankFor(real, "super-bowl", "adult-pickup", { date: DATE });
-  const family = R.rankFor(real, "super-bowl", "family-pickup", { date: DATE });
-  for (const x of [adult.lunch, adult.dinner, family.lunch, family.dinner]) {
-    assert.equal(x.rank, 2);
-    assert.equal(x.of, 6);
-    assert.equal(x.cheapestOther.id, "el-chilito");
-  }
+test("Bee Dumpling ranks 2nd of 6 for 1 adult and 6th of 6 for a family of 4 at pickup", () => {
+  const adult = R.rankFor(real, "bee-dumpling", "adult-pickup", { date: DATE });
+  const family = R.rankFor(real, "bee-dumpling", "family-pickup", { date: DATE });
+  for (const x of [adult.lunch, adult.dinner]) assert.deepEqual([x.rank, x.of], [2, 6]);
+  for (const x of [family.lunch, family.dinner]) assert.deepEqual([x.rank, x.of], [6, 6]);
+  for (const x of [adult.lunch, adult.dinner, family.lunch, family.dinner]) assert.equal(x.cheapestOther.id, "el-chilito");
 });
 
 test("app gap is estimated, uses the markup, and only covers apps the spot is on", () => {
-  const gaps = R.appGap(real, "super-bowl", { date: DATE });
-  assert.equal(gaps.length, 2, "1 adult and family of 4 on Uber Eats");
+  const gaps = R.appGap(real, "bee-dumpling", { date: DATE });
+  assert.equal(gaps.length, 2, "1 adult and family of 4 on DoorDash");
   for (const g of gaps) {
-    assert.equal(g.channelId, "ubereats");
+    assert.equal(g.channelId, "doordash");
     assert.equal(g.estimated, true);
     assert.equal(g.markupPct, 0.2);
     assert.ok(g.extra > 0, "the app costs more than pickup");
@@ -50,10 +63,10 @@ test("app gap is estimated, uses the markup, and only covers apps the spot is on
   assert.deepEqual(R.appGap(real, "moreno-burger", { date: DATE }), [], "not on any app");
 });
 
-test("promo report grades Super Bowl's two-for-one plates as real deals, with reasons", () => {
-  const promos = R.promoReport(real, "super-bowl", { date: DATE });
+test("promo report grades a restaurant's own two-for-one as a real deal, with reasons", () => {
+  const promos = R.promoReport(withTwinPlate(), "twin-plate", { date: DATE });
   const bogos = promos.filter((p) => p.kind === "menu-bogo");
-  assert.equal(bogos.length, 3);
+  assert.equal(bogos.length, 1);
   for (const p of bogos) {
     assert.equal(p.verdict, "real", p.title);
     assert.ok(p.reasons.length >= 2);
@@ -78,20 +91,22 @@ test("promo report checks every deal at a time it is running", () => {
 
 test("an expired deal is reported as ended, not graded", () => {
   const data = snapshot();
-  data.deals.push({ id: "test-old", restaurantId: "super-bowl", title: "Old app BOGO (test)", type: "bogo",
-    appliesTo: { itemIds: ["sb-sesame"] }, channels: ["ubereats"], expires: "2026-11-01", verified: "2026-10-25" });
-  const p = R.promoReport(data, "super-bowl", { date: DATE }).find((x) => x.id === "test-old");
+  data.deals.push({ id: "test-old", restaurantId: "bee-dumpling", title: "Old app BOGO (test)", type: "bogo",
+    appliesTo: { itemIds: ["bd-dump-pork"] }, channels: ["doordash"], expires: "2026-11-01", verified: "2026-10-25" });
+  const p = R.promoReport(data, "bee-dumpling", { date: DATE }).find((x) => x.id === "test-old");
   assert.equal(p.verdict, null);
   assert.equal(p.expired, true);
 });
 
 test("portion report counts stated portions, family packs and kids' meals against nearby spots", () => {
-  const sb = R.portionReport(real, "super-bowl");
-  assert.equal(sb.familyPack, false);
-  assert.equal(sb.kidsMeals, false);
-  assert.ok(sb.stated >= 4 && sb.stated <= sb.mealItems);
-  assert.equal(sb.nearby.count, 5);
-  assert.equal(sb.nearby.familyPack, 1, "El Chilito");
+  const bd = R.portionReport(real, "bee-dumpling");
+  assert.equal(bd.familyPack, false);
+  assert.equal(bd.kidsMeals, false);
+  assert.equal(bd.stated, 0, "no Bee Dumpling item states its portion");
+  assert.ok(bd.mealItems > 0);
+  assert.equal(bd.nearby.count, 5);
+  assert.equal(bd.nearby.familyPack, 1, "El Chilito");
+  assert.equal(bd.nearby.statePortions, 1, "El Chilito");
   const ec = R.portionReport(real, "el-chilito");
   assert.equal(ec.familyPack, true);
   assert.equal(ec.kidsMeals, true);
@@ -132,16 +147,16 @@ test("anonymize hides every competitor name and id; turning it off shows them", 
     }
     assert.match(text, /Nearby spot A/);
   }
-  const open = JSON.stringify(R.buildReport(real, "super-bowl", { date: DATE, anonymize: false }));
+  const open = JSON.stringify(R.buildReport(real, "bee-dumpling", { date: DATE, anonymize: false }));
   assert.ok(open.includes("El Chilito"));
   assert.ok(!open.includes("Nearby spot"));
 });
 
 test("report headline and sections come from the engine", () => {
-  const rep = R.buildReport(real, "super-bowl", { date: DATE });
+  const rep = R.buildReport(real, "bee-dumpling", { date: DATE });
   assert.equal(rep.headline,
-    "Super Bowl Restaurant is the 2nd-best value for a family of four out of 6 spots in 78745 (pickup, weekday dinner), and the 2nd-best value for one adult out of 6 (pickup, weekday lunch).");
-  assert.deepEqual(rep.onApps, ["Uber Eats"]);
+    "Bee Dumpling is the 6th-best value for a family of four out of 6 spots in 78745 (pickup, weekday dinner), and the 2nd-best value for one adult out of 6 (pickup, weekday lunch).");
+  assert.deepEqual(rep.onApps, ["DoorDash"]);
   assert.ok(rep.fixesTested.length >= 1);
   assert.equal(rep.method.collected, real.meta.collected);
   assert.equal(rep.method.checked.length, real.restaurants.length);
