@@ -1,6 +1,6 @@
-# Menu Math design
+# TrueTab design
 
-Built on the **Nick Lax 2026 Design System** (https://claude.ai/artifact/GrBtg5MmceuznbkvGEpSmN). Its tokens are copied into the top of `src/styles.css`. If this file and the system disagree, this file wins for Menu Math.
+Built on the **Nick Lax 2026 Design System** (https://claude.ai/artifact/GrBtg5MmceuznbkvGEpSmN). Its tokens are copied into the top of `src/styles.css`. If this file and the system disagree, this file wins for TrueTab.
 
 ## Look
 

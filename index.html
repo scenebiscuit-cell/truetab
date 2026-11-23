@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Menu Math: what your budget actually gets you in Austin</title>
+  <title>TrueTab: what your budget actually gets you in Austin</title>
   <meta name="description" content="Compare Austin restaurant prices across pickup and delivery apps, all-in, for one person or a whole family.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
     // Pick the theme before the page paints, so it never flashes the wrong one.
     (function () {
       var saved = null;
-      try { saved = localStorage.getItem("menu-math-theme"); } catch (e) {}
+      try { saved = localStorage.getItem("truetab-theme"); } catch (e) {}
       var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
       document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
     })();
@@ -24,7 +24,7 @@
 
   <header class="top">
     <div class="wrap top-row">
-      <span class="brand">Menu Math</span>
+      <span class="brand">TrueTab</span>
       <button type="button" class="btn btn-ghost" id="theme-toggle" aria-pressed="false">Dark theme</button>
     </div>
   </header>
@@ -33,7 +33,7 @@
     <section class="hero wrap">
       <p class="eyebrow" id="area-label">Austin 78745 · dine-in, pickup, delivery</p>
       <h1>What does your budget <span class="mark">actually</span> get you?</h1>
-      <p class="lead">Set a budget and who you're feeding. Menu Math finds the cheapest way to feed everyone at each spot, with delivery fees, service fees, tax and tip already counted.</p>
+      <p class="lead">Set a budget and who you're feeding. TrueTab finds the cheapest way to feed everyone at each spot, with delivery fees, service fees, tax and tip already counted.</p>
       <p class="notice" role="note" id="data-notice"><strong>Real 78745 menu prices</strong>, copied from each restaurant's own website or ordering page on Nov 22, 2026. DoorDash and Uber Eats prices aren't collected: they're <strong>estimated</strong> from the restaurant's price plus a typical app markup and typical fees. Check the restaurant before you go.</p>
     </section>
 
@@ -177,12 +177,12 @@
         <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
         <li><strong>Portions</strong> come from what the restaurant says first, then customer reports, then a typical amount for that kind of dish. Every card says which one it used.</li>
         <li><strong>Restaurant prices are real</strong>, from each restaurant's own menu or ordering page, with the date they were checked. Restaurant-specific charges, like a card surcharge or a to-go container fee, are included when the menu states them.</li>
-        <li><strong>App prices are estimates.</strong> Restaurants often price items higher on DoorDash and Uber Eats; an industry study put the average near 20%. Menu Math adds your chosen markup and typical fees. Real fees change with distance, time and promotions.</li>
+        <li><strong>App prices are estimates.</strong> Restaurants often price items higher on DoorDash and Uber Eats; an industry study put the average near 20%. TrueTab adds your chosen markup and typical fees. Real fees change with distance, time and promotions.</li>
         <li><strong>Fair for every restaurant.</strong> Rankings and deal verdicts come only from this math, the same way for every restaurant. Nobody can pay to change a ranking, a price or a verdict. Anything paid will be labeled.</li>
         <li><strong>Reviews</strong> link to each restaurant's Google, Yelp and Tripadvisor pages side by side. Live star ratings are planned.</li>
         <li><strong>Buy one, get one</strong> deals are marked with a BOGO badge. Restaurant BOGOs come from their menus; DoorDash and Uber Eats BOGOs are entered by hand when seen in the app, with an end date, and disappear when they expire.</li>
         <li><strong>Deal check</strong> grades every deal: <em>Real deal</em> (saves 10% or more with no warning signs), <em>Small saving</em>, or <em>Not worth it</em>. It compares the deal with the same order without it, with the cheapest way to order without any deal, with similar dishes nearby, and with the restaurant's recent prices.</li>
-        <li><strong>Deals</strong> count only on the days, hours and ways to order they apply to. Menu Math works out the order with and without the deal and keeps the cheaper one.</li>
+        <li><strong>Deals</strong> count only on the days, hours and ways to order they apply to. TrueTab works out the order with and without the deal and keeps the cheaper one.</li>
         <li><strong>Best value</strong> compares rating to cost per person. A 3-star place adds no value; each star above that does.</li>
       </ul>
     </section>

@@ -1,4 +1,4 @@
-# Menu Math: restaurant report pitch
+# TrueTab: restaurant report pitch
 
 Copy for selling the restaurant report on Upwork, on Contra and by direct outreach. Created by Nick Lax.
 
@@ -34,14 +34,14 @@ Delivered as a short report (about 2 pages) plus a 20-minute call to walk throug
 
 **What I won't do**
 
-- I won't promise rankings. My comparison site, Menu Math, ranks restaurants only by value per person, the same way for everyone. Buying a report doesn't change where you rank; acting on it can.
+- I won't promise rankings. My comparison site, TrueTab, ranks restaurants only by value per person, the same way for everyone. Buying a report doesn't change where you rank; acting on it can.
 - I won't make up numbers. Anything estimated is labeled as an estimate.
 
 **Price:** [PRICE]. [INTRO PRICE] for the first 3 restaurants in exchange for an honest testimonial.
 
 **About me**
 
-I spent over a decade in customer support, operations and compliance work, including enterprise SaaS support at Atlassian and writing operating procedures for regulated businesses. I build tools that show their work: Menu Math compares Austin restaurant prices across dine-in, pickup and delivery apps, all-in, with every estimate labeled.
+I spent over a decade in customer support, operations and compliance work, including enterprise SaaS support at Atlassian and writing operating procedures for regulated businesses. I build tools that show their work: TrueTab compares Austin restaurant prices across dine-in, pickup and delivery apps, all-in, with every estimate labeled.
 
 nlaxatx@gmail.com · [portfolio link] · [LinkedIn] · [GitHub]
 
@@ -53,7 +53,7 @@ Use by email, Instagram DM or in person. Keep it short; lead with something spec
 
 > Hi [name],
 >
-> I run Menu Math, a site that compares South Austin restaurants by what it actually costs to feed someone: menu price plus app fees, tax and tip.
+> I run TrueTab, a site that compares South Austin restaurants by what it actually costs to feed someone: menu price plus app fees, tax and tip.
 >
 > I noticed [one specific, true thing: "your family meal feeds 4–6 for $53, the best family value on Manchaca" / "your pickup price is about 20% under what the apps charge, but nothing on your page tells customers that"].
 >
@@ -68,7 +68,7 @@ Use by email, Instagram DM or in person. Keep it short; lead with something spec
 
 ## 3. One-page sample report (outline)
 
-Build the real one from Menu Math data. Example shape:
+Build the real one from TrueTab data. Example shape:
 
 **[Restaurant], value check, [date]**
 

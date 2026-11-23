@@ -1,4 +1,4 @@
-# Menu Math plan
+# TrueTab plan
 
 PLAN.md is the source of truth for milestones and decisions. Tick a milestone only after Nick confirms its check passed.
 
@@ -52,7 +52,8 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Kids eat free covers up to `perAdult` kids per paying adult; the kids' portions aren't bought.
 - 2026-11-22: Diet tags are what the menu says. The page tells people to confirm allergies with the restaurant.
 - 2026-11-22: Budget minimum hides spots under it and says how many were hidden.
-- 2026-11-22: Working name "Menu Math", repo `menu-math`. Not final.
+- 2026-11-22: Working name "Menu Math".
+- 2026-11-23: Renamed to **TrueTab** ("the true total of your tab"), repo `truetab`. Before launch: check the domain on Cloudflare and run a USPTO trademark search.
 - 2026-11-22: Real data starts in 78745. Prices come only from restaurants' own websites and Toast ordering pages. Menus that don't list prices are left out, never guessed.
 - 2026-11-22: Family meals that say "feeds 4–6" count as 4 (the low end), with the menu's wording kept in a note.
 - 2026-11-22: Kids-only items (kids' meals) are used one per kid when that's cheaper, and never count toward feeding adults.

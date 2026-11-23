@@ -1,4 +1,4 @@
-# Menu Math: rules for Claude
+# TrueTab: rules for Claude
 
 Read README.md, PLAN.md and docs/DATA.md before changing anything.
 
@@ -6,7 +6,7 @@ Read README.md, PLAN.md and docs/DATA.md before changing anything.
 
 - One small, testable step at a time; end with "how to check it worked."
 - Explain new concepts in one or two plain sentences before using them.
-- Windows PC with PowerShell. Start every command block with `cd C:\Projects\menu-math`.
+- Windows PC with PowerShell. Start every command block with `cd C:\Projects\truetab`.
 - New branch from the current main for every change, then a pull request. Never push to main. Merge only when Nick says "merge."
 - When referring back to earlier steps or drafts, paste them in full.
 

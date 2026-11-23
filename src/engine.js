@@ -1,11 +1,11 @@
 /*
- * Menu Math engine: pure functions, no DOM. Runs in the browser (window.MenuMath)
+ * TrueTab engine: pure functions, no DOM. Runs in the browser (window.TrueTab)
  * and in Node (require). Every money value is rounded to cents.
  */
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  else root.MenuMath = api;
+  else root.TrueTab = api;
 })(typeof self !== "undefined" ? self : this, function () {
   const cents = (n) => Math.round(n * 100) / 100;
   const RES = 12; // portion resolution: 1/12 of an adult portion

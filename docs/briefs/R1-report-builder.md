@@ -1,6 +1,6 @@
 # Brief for Claude Code: set up the repo, then build the restaurant report (R1)
 
-Work in `C:\Projects\menu-math`. Read `CLAUDE.md`, `README.md`, `PLAN.md`, `docs/DATA.md` and section 3 of `PITCH.md` first. Follow every rule in `CLAUDE.md`. Nick is a beginner programmer on Windows with PowerShell: explain new concepts in one or two plain sentences, start every command block with `cd C:\Projects\menu-math`, and end each step with "How to check it worked."
+Work in `C:\Projects\truetab`. Read `CLAUDE.md`, `README.md`, `PLAN.md`, `docs/DATA.md` and section 3 of `PITCH.md` first. Follow every rule in `CLAUDE.md`. Nick is a beginner programmer on Windows with PowerShell: explain new concepts in one or two plain sentences, start every command block with `cd C:\Projects\truetab`, and end each step with "How to check it worked."
 
 ## Step 0: get the project onto GitHub (stop after this step)
 
@@ -8,7 +8,7 @@ The folder came from a zip and already has Git history on branch `m1-prototype` 
 
 1. Check `git status` and `git log --oneline` on `m1-prototype`.
 2. Create a local `main` with one empty commit ("Initial commit"), then rebase `m1-prototype` onto it so the branch has a base to open a pull request against.
-3. Create the public repo `scenebiscuit-cell/menu-math` with `gh`, push `main` and `m1-prototype`, and open a pull request from `m1-prototype` into `main` titled "Menu Math: prototype, 78745 data, deals, deal check". Summarize the commits in the PR body.
+3. Create the public repo `scenebiscuit-cell/truetab` with `gh`, push `main` and `m1-prototype`, and open a pull request from `m1-prototype` into `main` titled "TrueTab: prototype, 78745 data, deals, deal check". Summarize the commits in the PR body.
 4. Run `npm test` (expect 51 passing) and tell Nick the PR link.
 5. **Stop. Do not merge.** Wait for Nick to say "merge." After he says it: merge, turn on GitHub Pages from `main` (root folder), and give him the live link plus how to check it.
 
@@ -16,7 +16,7 @@ The folder came from a zip and already has Git history on branch `m1-prototype` 
 
 After the merge, create branch `report-builder` from the current `main`.
 
-**Goal:** a page that turns Menu Math's data into the short restaurant report described in `PITCH.md` section 3, so Nick can review it, edit the wording, and print it to PDF to send to a restaurant.
+**Goal:** a page that turns TrueTab's data into the short restaurant report described in `PITCH.md` section 3, so Nick can review it, edit the wording, and print it to PDF to send to a restaurant.
 
 **Build**
 

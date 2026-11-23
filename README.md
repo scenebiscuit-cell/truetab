@@ -1,6 +1,6 @@
-# Menu Math
+# TrueTab
 
-**What does your budget actually get you?** Menu Math compares Austin restaurants across dine-in, pickup, the restaurant's own delivery, DoorDash and Uber Eats, using the **all-in price**: menu prices plus delivery fee, service fee, small-order fee, tax and tip. Set a budget range, who you're feeding, when, and what you like, and it finds the best meal for your money at each spot, including any deal running at that time. Cheap lunch or nice dinner: the range decides.
+**What does your budget actually get you?** TrueTab compares Austin restaurants across dine-in, pickup, the restaurant's own delivery, DoorDash and Uber Eats, using the **all-in price**: menu prices plus delivery fee, service fee, small-order fee, tax and tip. Set a budget range, who you're feeding, when, and what you like, and it finds the best meal for your money at each spot, including any deal running at that time. Cheap lunch or nice dinner: the range decides.
 
 Created by Nick Lax.
 
@@ -36,7 +36,7 @@ No build step and no installs. Open `index.html` in a browser, or serve the fold
 Tests use Node's built-in test runner:
 
 ```powershell
-cd C:\Projects\menu-math
+cd C:\Projects\truetab
 npm test
 ```
 

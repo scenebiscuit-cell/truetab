@@ -1,7 +1,7 @@
-/* Menu Math page script: the only file that touches the page. Math lives in engine.js. */
+/* TrueTab page script: the only file that touches the page. Math lives in engine.js. */
 (function () {
   const data = window.MENU_DATA;
-  const M = window.MenuMath;
+  const M = window.TrueTab;
   const $ = (id) => document.getElementById(id);
   const money = (n) => "$" + n.toFixed(2);
 
@@ -41,7 +41,7 @@
   themeBtn.addEventListener("click", () => {
     const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("menu-math-theme", next); } catch (e) {}
+    try { localStorage.setItem("truetab-theme", next); } catch (e) {}
     syncThemeButton();
   });
   syncThemeButton();
@@ -80,7 +80,7 @@
     sortSel.closest(".field").append(el("p", { class: "help" }, "Best value returns once ratings are added."));
   }
   /* Cuisine and diet checkboxes. Hidden cuisines are remembered on this device. */
-  const CUISINE_KEY = "menu-math-hidden-cuisines";
+  const CUISINE_KEY = "truetab-hidden-cuisines";
   const allCuisines = [...new Set(data.restaurants.flatMap((r) => r.cuisines || []))].sort();
   let hiddenCuisines = [];
   try { hiddenCuisines = JSON.parse(localStorage.getItem(CUISINE_KEY) || "[]"); } catch (e) { hiddenCuisines = []; }
