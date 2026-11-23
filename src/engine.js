@@ -369,7 +369,8 @@
     const markupPct = typeof query.markupPct === "number" ? query.markupPct
       : typeof data.defaultMarkupPct === "number" ? data.defaultMarkupPct : 0.2;
     let closedNow = 0;
-    const medians = perPortionMedians(data);
+    // query.medians: typical prices from the full data, so a trimmed copy (one deal's items) is still compared with the whole area.
+    const medians = query.medians || perPortionMedians(data);
     for (const r of data.restaurants) {
       if (!cuisineAllowed(r, query.cuisines)) continue;
       if (!isOpen(r, query.when)) { closedNow++; continue; }

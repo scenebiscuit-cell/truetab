@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueTab: restaurant report</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-23b">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("truetab-theme"); } catch (e) {}
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="index.html">TrueTab</a>
+      <button type="button" class="btn btn-ghost" id="theme-toggle" aria-pressed="false">Dark theme</button>
+    </div>
+  </header>
+
+  <main class="wrap report">
+    <form class="report-controls" id="report-form" novalidate>
+      <div class="field">
+        <label for="restaurant">Restaurant</label>
+        <select id="restaurant" name="restaurant"></select>
+      </div>
+      <div class="field">
+        <label for="report-date">Report date</label>
+        <input id="report-date" name="date" type="date">
+      </div>
+      <div class="field">
+        <label class="inline-check"><input type="checkbox" id="anonymize" name="anonymize" checked> Anonymize competitors</label>
+      </div>
+      <div class="field">
+        <button type="button" class="btn btn-ghost" id="print">Print or save as PDF</button>
+      </div>
+      <p class="help wide">For Nick: review the wording and the suggestions before sending. Every number comes from the data and the engine; edit the data, not this page.</p>
+    </form>
+
+    <article class="doc" id="doc"></article>
+  </main>
+
+  <footer class="foot"><div class="wrap"><p>Created by Nick Lax · <a href="check.html">Data checklist</a> · <a href="index.html">Back to TrueTab</a></p></div></footer>
+
+  <script src="data/austin-78745.js?v=2026-11-23b"></script>
+  <script src="src/engine.js?v=2026-11-23b"></script>
+  <script src="src/report.js?v=2026-11-23b"></script>
+  <script>
+  {
+    const data = window.MENU_DATA;
+    const R = window.TrueTabReport;
+    const form = document.getElementById("report-form");
+    const doc = document.getElementById("doc");
+    const VERDICT = {
+      real: ["Real deal", "tag-fits"],
+      small: ["Small saving", "tag-just-over"],
+      "not-worth-it": ["Not worth it", "tag-over"]
+    };
+
+    function el(tag, attrs, ...kids) {
+      const n = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) if (v != null) k === "class" ? (n.className = v) : n.setAttribute(k, v);
+      for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+      return n;
+    }
+    const money = (n) => "$" + n.toFixed(2);
+    const est = (n) => "est. " + money(n);
+    const has = (n, one, many) => (n === 1 ? one : many);
+    const ordinal = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : { 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+    const pct = (n) => Math.round(n * 100) + "%";
+    const longDate = (iso) => iso
+      ? new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+      : "";
+    const today = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    /* Theme toggle (same behavior as the main page) */
+    const toggle = document.getElementById("theme-toggle");
+    function syncToggle() {
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      toggle.textContent = dark ? "Light theme" : "Dark theme";
+      toggle.setAttribute("aria-pressed", String(dark));
+    }
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("truetab-theme", next); } catch (e) {}
+      syncToggle();
+    });
+    syncToggle();
+
+    /* Controls */
+    const select = document.getElementById("restaurant");
+    for (const r of data.restaurants) select.append(el("option", { value: r.id }, r.name));
+    const wanted = new URLSearchParams(location.search).get("r");
+    if (wanted && data.restaurants.some((r) => r.id === wanted)) select.value = wanted;
+    document.getElementById("report-date").value = today();
+    document.getElementById("print").addEventListener("click", () => window.print());
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+
+    /* Sections */
+    function rankText(x, when) {
+      if (!x.open) return `closed at ${when}`;
+      return `${ordinal(x.rank)} of ${x.of} at ${when} (${est(x.total)}${x.channelLabel !== "Pickup" ? ", " + x.channelLabel.toLowerCase() : ""})`;
+    }
+
+    function rankList(rep, keys) {
+      return el("ul", { class: "rank-lines" }, keys.map((k, i) => {
+        const s = rep.ranks[k];
+        const p = rep.ranks[keys[0]];
+        if (i > 0 && s.lunch.total === p.lunch.total && s.dinner.total === p.dinner.total && s.lunch.rank === p.lunch.rank && s.dinner.rank === p.dinner.rank) {
+          return el("li", {}, el("strong", {}, "Cheapest way to order: "), "pickup, with the same ranks.");
+        }
+        const cheapest = s.lunch.cheapestOther;
+        return el("li", {},
+          el("strong", {}, k.endsWith("pickup") ? "Pickup: " : "Cheapest way to order: "),
+          `${rankText(s.lunch, "lunch")}, ${rankText(s.dinner, "dinner")}.`,
+          cheapest ? ` Cheapest competitor at lunch: ${cheapest.label}, ${est(cheapest.total)}.` : "");
+      }));
+    }
+
+    // One table: every spot, pickup and cheapest way, at lunch and dinner.
+    function rankTable(rep, group, caption) {
+      const cols = [[`${group}-pickup`, "lunch"], [`${group}-pickup`, "dinner"], [`${group}-best`, "lunch"], [`${group}-best`, "dinner"]];
+      const labels = rep.ranks[`${group}-pickup`].lunch.table.map((x) => x.label);
+      for (const [k, t] of cols) for (const x of rep.ranks[k][t].table) if (!labels.includes(x.label)) labels.push(x.label);
+      const cell = (k, t, label) => {
+        const x = rep.ranks[k][t].table.find((y) => y.label === label);
+        if (!x) return el("td", { class: "num" }, "Closed");
+        return el("td", { class: "num" }, est(x.total),
+          k.endsWith("best") && x.channelLabel !== "Pickup" ? el("span", { class: "sub" }, x.channelLabel) : null);
+      };
+      return el("div", { class: "table-wrap" },
+        el("table", { class: "dish-table report-table" },
+          el("caption", { class: "sr-only" }, caption),
+          el("thead", {}, el("tr", {},
+            el("th", { scope: "col" }, "Spot"),
+            el("th", { scope: "col" }, "Pickup, lunch"),
+            el("th", { scope: "col" }, "Pickup, dinner"),
+            el("th", { scope: "col" }, "Cheapest way, lunch"),
+            el("th", { scope: "col" }, "Cheapest way, dinner"))),
+          el("tbody", {}, labels.map((label) => {
+            const self = label === rep.restaurant.name;
+            return el("tr", { class: self ? "self" : null },
+              el("th", { scope: "row" }, label, self ? el("span", { class: "sub" }, "This restaurant") : null),
+              cols.map(([k, t]) => cell(k, t, label)));
+          }))));
+    }
+
+    function portionLines(rep) {
+      const p = rep.portions;
+      const n = p.nearby;
+      return el("ul", { class: "rank-lines" },
+        el("li", {}, el("strong", {}, "Family pack: "), p.familyPack ? "yes" : "none", ` (${n.familyPack} of ${n.count} nearby spots ${has(n.familyPack, "has", "have")} one).`),
+        el("li", {}, el("strong", {}, "Kids' meals: "), p.kidsMeals ? "yes" : "none", ` (${n.kidsMeals} of ${n.count} nearby spots ${has(n.kidsMeals, "has", "have")} them).`),
+        el("li", {}, el("strong", {}, "Portions stated: "),
+          `${p.stated} of ${p.mealItems} meal items (${p.statedPct}%) ${has(p.stated, "says", "say")} how many people they feed; the rest use a typical amount for the dish (estimated). `,
+          `${n.statePortions} of ${n.count} nearby spots ${has(n.statePortions, "states", "state")} portions on any item.`));
+    }
+
+    function appSection(rep) {
+      const name = rep.restaurant.name;
+      if (!rep.appGap.length) {
+        return [el("p", {}, `We don't know of ${name} on DoorDash or Uber Eats, so there's no app price gap to show. Customers ordering pickup pay the menu price with no app markup or fees.`)];
+      }
+      const family = rep.appGap.filter((g) => g.group === "Family of 4").sort((a, b) => b.extra - a.extra)[0] || rep.appGap[0];
+      return [
+        el("p", {}, `On ${family.channelLabel}, ${family.group === "Family of 4" ? "a family of 4" : "one adult"} pays an estimated ${money(family.extra)} (${family.extraPct}%) more than ordering pickup from ${name}.`),
+        el("div", { class: "table-wrap" },
+          el("table", { class: "dish-table report-table" },
+            el("caption", { class: "sr-only" }, "App price compared with pickup, weekday dinner, without deals"),
+            el("thead", {}, el("tr", {},
+              el("th", { scope: "col" }, "Order"), el("th", { scope: "col" }, "App"),
+              el("th", { scope: "col" }, "Pickup"), el("th", { scope: "col" }, "On the app"), el("th", { scope: "col" }, "Extra on the app"))),
+            el("tbody", {}, rep.appGap.map((g) => el("tr", {},
+              el("th", { scope: "row" }, g.group),
+              el("td", {}, g.channelLabel),
+              el("td", { class: "num" }, est(g.pickup)),
+              el("td", { class: "num" }, est(g.app)),
+              el("td", { class: "num" }, `${est(g.extra)} (${g.extraPct}%)`)))))),
+        el("p", { class: "fine" }, `App totals are estimated: menu prices plus a ${pct(rep.appGap[0].markupPct ?? rep.method.markupPct)} app markup, then typical delivery and service fees, tax and an 18% tip. Weekday dinner, no deals.`)
+      ];
+    }
+
+    function promoSection(rep) {
+      if (!rep.promos.length) return [el("p", {}, `No specials or two-for-one items for ${rep.restaurant.name} are on file.`)];
+      return [
+        el("ul", { class: "promos" }, rep.promos.map((p) => {
+          const v = p.verdict ? VERDICT[p.verdict] : [p.expired ? "Ended" : "Not graded", "tag-same"];
+          const how = [p.whenLabel, p.channelLabel && p.channelLabel.toLowerCase(), p.party].filter(Boolean).join(", ");
+          return el("li", { class: "promo" },
+            el("div", { class: "deal-head" }, el("span", { class: `tag ${v[1]}` }, v[0]), el("strong", {}, p.title)),
+            how ? el("p", { class: "fine" }, `Checked at ${how}${p.kind === "menu-bogo" ? ", on the restaurant's own menu" : ""}.`) : null,
+            el("ul", { class: "deal-reasons" }, p.reasons.map((t) => el("li", {}, t))),
+            p.note ? el("p", { class: "fine" }, p.note) : null);
+        })),
+        el("p", { class: "fine" }, "Savings are estimated from all-in totals. Real deal: saves 10% or more with no warning signs. Small saving: less than 10%, or a warning sign. Not worth it: ordering without the deal costs less.")
+      ];
+    }
+
+    function fixSection(rep) {
+      if (!rep.fixes.length) {
+        const n = rep.fixesTested.length;
+        return [el("p", {}, n
+          ? `We tested ${n === 1 ? "one change" : n + " changes"}: ${rep.fixesTested.join("; ")}. ${n === 1 ? "It didn't" : "None of them"} move ${rep.restaurant.name} up a rank, so there's no change to suggest from the numbers alone.`
+          : `None of the standard changes apply to ${rep.restaurant.name} (it already has a family pack, ranks in the top half for one adult, and has no promo graded Not worth it).`)];
+      }
+      return [
+        el("ol", { class: "fixes" }, rep.fixes.map((f) => el("li", { class: "fix" },
+          el("div", { class: "deal-head" }, el("span", { class: "tag tag-same" }, "Suggestion"), el("strong", {}, f.title)),
+          el("p", {}, f.detail),
+          el("p", { class: "fine" }, `Tested by re-running the ranking with this change: ${f.scenarioLabel.charAt(0).toLowerCase() + f.scenarioLabel.slice(1)}, weekday ${f.time}, `,
+            el("strong", {}, `${ordinal(f.before.rank)} of ${f.before.of} (${est(f.before.total)}) → ${ordinal(f.after.rank)} of ${f.after.of} (${est(f.after.total)})`), ".")))),
+        el("p", { class: "fine screen-only" }, "For Nick: these are suggestions to review, not promises. Check each one makes sense for the restaurant before sending.")
+      ];
+    }
+
+    function methodSection(rep) {
+      const m = rep.method;
+      const dates = [...new Set(m.checked.map((x) => x.lastChecked).filter(Boolean))];
+      const fees = m.appFees.map((f) => `${f.label}: ${money(f.deliveryFee)} delivery, ${pct(f.serviceFeePct)} service fee with a ${money(f.serviceFeeMin)} minimum, ${pct(f.tipPct)} tip`).join("; ");
+      return [el("ul", { class: "method" },
+        el("li", {}, el("strong", {}, "Sources: "), "menu prices copied by hand from each restaurant's own website or ordering page. Nothing was scraped. DoorDash and Uber Eats prices were not collected."),
+        el("li", {}, el("strong", {}, "Date checked: "), dates.length === 1
+          ? `every price in this report was checked on ${longDate(dates[0])}.`
+          : m.checked.map((x) => `${x.label}: ${x.lastChecked ? longDate(x.lastChecked) : "not yet"}`).join("; ") + "."),
+        el("li", {}, el("strong", {}, "All-in price: "), `menu prices plus fees, ${(m.taxRate * 100).toFixed(2)}% tax on food, and tip where there is one. Pickup has no fees or tip. Every total is an estimate.`),
+        el("li", {}, el("strong", {}, "Estimated: "), `app menu prices (the restaurant's price plus ${pct(m.markupPct)}), app fees (${fees}), and any portion a menu doesn't state (a typical amount for the dish). A kid counts as ${m.kidPortion} of an adult portion.`),
+        el("li", {}, el("strong", {}, "When: "), `${rep.times.lunch} and ${rep.times.dinner}, among the spots open then that can feed the group. Deals count only when they're running.`),
+        el("li", {}, el("strong", {}, "Fairness: "), "rankings come only from this math, applied the same way to every restaurant. Paying for this report, or for anything else, doesn't change a ranking or a verdict.")
+      ), el("p", { class: "fine" }, "Created by Nick Lax · TrueTab")];
+    }
+
+    function section(title, ...body) {
+      return el("section", { class: "doc-section" }, el("h2", {}, title), body);
+    }
+
+    function render() {
+      const rep = R.buildReport(data, select.value, {
+        date: document.getElementById("report-date").value || undefined,
+        anonymize: document.getElementById("anonymize").checked
+      });
+      document.title = `TrueTab: ${rep.restaurant.name} value check`;
+      doc.replaceChildren(
+        el("header", { class: "doc-head" },
+          el("h1", {}, `${rep.restaurant.name}, value check`),
+          el("p", { class: "doc-meta" }, [rep.restaurant.address, rep.date ? longDate(rep.date) : null, "Prepared by TrueTab"].filter(Boolean).join(" · ")),
+          el("p", { class: "doc-headline" }, rep.headline)),
+        section("Feeding one adult, all-in", rankList(rep, ["adult-pickup", "adult-best"]),
+          rankTable(rep, "adult", "Cheapest meal for one adult at each spot, estimated all-in")),
+        section("Feeding a family of 4, all-in", el("p", { class: "fine" }, "Two adults and two kids. Totals for the whole family."),
+          rankList(rep, ["family-pickup", "family-best"]),
+          rankTable(rep, "family", "Cheapest order for a family of 4 at each spot, estimated all-in"),
+          portionLines(rep)),
+        section("App vs. pickup", appSection(rep)),
+        section("Promo check", promoSection(rep)),
+        section("Suggested changes", fixSection(rep)),
+        section("How this was measured", methodSection(rep)));
+    }
+
+    render();
+  }
+  </script>
+</body>
+</html>
