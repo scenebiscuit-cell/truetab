@@ -309,7 +309,7 @@ a.brand { color: var(--ink); text-decoration: none; }
 .brand { font: 800 24px/1 var(--font-display); font-stretch: 72%; text-transform: uppercase; letter-spacing: 0.03em; }
 h1 { font-weight: 800; font-stretch: 78%; letter-spacing: -0.02em; line-height: 0.95; }
 h2, h3 { font-stretch: 88%; }
-.mark { background: linear-gradient(var(--stamp), var(--stamp)) no-repeat 0 96% / 100% 0.08em; padding: 0; }
+.mark { background: none; padding: 0; text-decoration: underline var(--stamp); text-decoration-thickness: 0.08em; text-underline-offset: 0.06em; text-decoration-skip-ink: none; }
 .notice { border: 1px dashed var(--line-strong); }
 
 .tab { font: 700 15px/1 var(--font-display); font-stretch: 85%; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -319,7 +319,7 @@ h2, h3 { font-stretch: 88%; }
 .subtab { border-style: dashed; }
 .subtab[aria-selected="true"] { border-style: solid; background: var(--accent-soft); border-color: var(--accent); }
 
-.search { border: 1px solid var(--line-strong); border-top-width: 3px; border-top-style: double; }
+.search { border: 1px solid var(--line-strong); border-top-width: 3px; border-top-style: double; border-radius: 0; }
 
 /* Each result is a guest check: a printed header strip with its number, ruled order lines,
    a carbon-red total, and a torn bottom edge. */
