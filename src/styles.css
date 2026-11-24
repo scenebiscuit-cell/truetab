@@ -335,13 +335,16 @@ h2, h3 { font-stretch: 88%; }
 .card.top-pick { border-color: var(--accent); box-shadow: var(--shadow-print); }
 .card h3 { font-size: 24px; font-weight: 750; letter-spacing: -0.005em; }
 .price-row { border-top: 3px double var(--line-strong); padding-top: var(--space-3); }
-.price-row::before { content: "Total"; align-self: center; font: 700 12px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); }
+.price-label { flex-basis: 100%; font: 700 15px/1.2 var(--font-sans); color: var(--ink); }
+.price-note { font-size: 15px; }
+/* Courier is thin at small sizes: small caps labels are bold. */
+.label, .eyebrow, .dish-table th { font-weight: 700; color: var(--ink-muted); }
 .price { font: 700 clamp(28px, 2.2vw + 14px, 34px)/1 var(--font-mono); letter-spacing: -0.04em; color: var(--stamp); white-space: nowrap; }
 .lines li { border-bottom-color: var(--line); }
 .lines .num, .breakdown td:last-child, .channels td:last-child { font-family: var(--font-mono); font-weight: 700; }
 
 /* Tags read as rubber stamps. */
-.tag { border: 1px solid currentColor; font-weight: 700; border-radius: var(--radius-sm); }
+.tag { border: 1px solid currentColor; font-weight: 700; font-size: 13px; padding: 5px 9px; letter-spacing: 0.05em; border-radius: var(--radius-sm); }
 .tag-same { border-color: var(--line-strong); }
 .tag-bogo { border-color: var(--on-marker); }
 .tag-top { background: var(--stamp-soft); color: var(--stamp); border-width: 2px; transform: rotate(-4deg); letter-spacing: 0.12em; }
