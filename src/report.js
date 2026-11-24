@@ -345,6 +345,28 @@
       }
     }
 
+    // (d) A kids' meal at the area's median kids' meal price, if they have none and nearby spots do.
+    if (!facts.kidsMeals) {
+      const kidPrices = data.restaurants
+        .filter((x) => x.id !== restaurantId)
+        .flatMap((x) => x.items.filter((i) => i.kidsOnly && typeof (i.prices || {}).direct === "number").map((i) => i.prices.direct))
+        .sort((a, b) => a - b);
+      if (kidPrices.length) {
+        const price = T.cents(medianOf(kidPrices));
+        candidates.push({
+          id: "kids-meal",
+          title: `Add a kids' meal for ${money(price)}`,
+          detail: `Priced at the typical kids' meal nearby (median of ${kidPrices.length}). Families can buy one per kid instead of a full adult dish.`,
+          scenarios: ["family-pickup", "family-best"],
+          times: ["lunch", "dinner"],
+          apply: (copy) => restaurantOf(copy, restaurantId).items.push({
+            id: restaurantId + "--suggested-kids-meal", name: "Kids' meal (suggested)", dishType: "kids-meal", kidsOnly: true,
+            prices: { direct: price }
+          })
+        });
+      }
+    }
+
     // (c) For an app promo graded "Not worth it", run the same deal for pickup.
     for (const p of promoReport(data, restaurantId, { date }).filter((x) => x.kind === "deal" && x.verdict === "not-worth-it")) {
       const deal = data.deals.find((d) => d.id === p.id);
