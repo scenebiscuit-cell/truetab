@@ -141,3 +141,7 @@ test("Bee Dumpling: open daily, on DoorDash, every portion marked as an estimate
   assert.equal(M.channelFor(bd, ch("ubereats")), null);
   for (const i of bd.items) assert.notEqual(M.servesFor(i, real.dishTypes).source, "restaurant", i.id);
 });
+
+test("no price history on the real data yet, so no price changes are listed", () => {
+  assert.deepEqual(M.priceChanges(real, "2026-11-24", 30), []);
+});

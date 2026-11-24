@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="src/styles.css?v=2026-11-24">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-24b">
   <script>
     (function () {
       var saved = null;
@@ -39,11 +39,23 @@
         <tbody></tbody>
       </table>
     </div>
+
+    <h2 class="check-h2" id="changes-heading">Price changes in the last 30 days</h2>
+    <p class="summary" id="changes-summary"></p>
+    <div class="table-wrap" id="changes-wrap" role="region" aria-labelledby="changes-heading" tabindex="0" hidden>
+      <table class="dish-table" aria-labelledby="changes-heading">
+        <thead>
+          <tr><th scope="col">Restaurant</th><th scope="col">Item</th><th scope="col">Was</th><th scope="col">Now</th><th scope="col">Change</th></tr>
+        </thead>
+        <tbody id="changes-body"></tbody>
+      </table>
+    </div>
   </main>
 
   <footer class="foot"><div class="wrap"><p>Created by Nick Lax · <a href="report.html">Restaurant report builder</a> · <a href="index.html">Back to TrueTab</a></p></div></footer>
 
-  <script src="data/austin-78745.js?v=2026-11-24"></script>
+  <script src="data/austin-78745.js?v=2026-11-24b"></script>
+  <script src="src/engine.js?v=2026-11-24b"></script>
   <script>
   {
     const data = window.MENU_DATA;
@@ -86,6 +98,27 @@
           ? deals.map((d) => el("span", { class: "sub", style: "display:block" }, `${d.title} (verified ${d.verified})`))
           : el("span", { class: "sub" }, "None"))
       ));
+    }
+
+    // Price changes between weekly checks (math in src/engine.js).
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const changes = window.TrueTab.priceChanges(data, iso, 30);
+    const money = (n) => "$" + n.toFixed(2);
+    document.getElementById("changes-summary").textContent = changes.length
+      ? `${changes.length} menu price${changes.length === 1 ? "" : "s"} changed. Rises first. Each was checked by hand on the restaurant's own menu.`
+      : "None recorded yet. When a price changes on a weekly check, move the old price and its date into the item's history (docs/DATA.md) before updating it, and it shows up here.";
+    document.getElementById("changes-wrap").hidden = !changes.length;
+    const changesBody = document.getElementById("changes-body");
+    for (const c of changes) {
+      const up = c.change > 0;
+      changesBody.append(el("tr", {},
+        el("td", {}, c.restaurantName),
+        el("td", {}, c.itemName),
+        el("td", { class: "num" }, money(c.from), el("span", { class: "sub" }, c.since)),
+        el("td", { class: "num" }, money(c.to), el("span", { class: "sub" }, c.seen)),
+        el("td", { class: "num" },
+          el("span", { class: `tag ${up ? "tag-pricier" : "tag-cheaper"}` }, `${up ? "Up" : "Down"} ${money(Math.abs(c.change))}`),
+          el("span", { class: "sub" }, `${up ? "+" : ""}${c.pct}%`))));
     }
   }
   </script>
