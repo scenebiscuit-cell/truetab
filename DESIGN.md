@@ -25,7 +25,8 @@ TrueTab has its own look, **the guest check**: the green diner order pad a serve
 - Budget tags: `success` Fits budget, `warning` Just over, `danger` Over budget. Always a word, never color alone.
 - Dish badges: Cheaper (`success`), About the same (neutral), Pricier (`danger`).
 - Estimated portions are marked with "~" and the words "Estimated ... (typical for this dish)".
-- Big prices always start with "est."
+- Every big total sits under a dark "Estimated total" label, so the label is as easy to see as the number. Smaller amounts, like per person, start with "est."
+- Courier is thin at small sizes: small caps labels and stamp tags are bold, tags at least 13px.
 
 ## Copy
 

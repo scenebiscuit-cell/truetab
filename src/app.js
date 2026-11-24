@@ -303,8 +303,9 @@
           verdict ? el("span", { class: `tag ${verdict[1]}` }, verdict[0]) : null)
       ),
       el("div", { class: "price-row" },
-        el("span", { class: "price" }, "est. " + money(p.total)),
-        out.people > 1 ? el("span", { class: "price-note" }, `${money(b.perPerson)} per person`) : null
+        el("span", { class: "price-label" }, "Estimated total"),
+        el("span", { class: "price" }, money(p.total)),
+        out.people > 1 ? el("span", { class: "price-note" }, `est. ${money(b.perPerson)} per person`) : null
       ),
       el("p", { class: "via" }, "Cheapest way: ", el("strong", {}, b.channelLabel),
         b.freeKids
