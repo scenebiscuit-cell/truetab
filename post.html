@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueTab: weekly post draft</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-24c">
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("truetab-theme"); } catch (e) {}
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="index.html">TrueTab</a>
+      <button type="button" class="btn btn-ghost" id="theme-toggle" aria-pressed="false">Dark theme</button>
+    </div>
+  </header>
+
+  <main class="wrap report">
+    <h1 class="page-title">Weekly post draft</h1>
+    <p class="lead post-lead">"78745 Real Deals", written from this week's data: the cheapest spots, the biggest app markup, and every deal with its verdict. Edit the wording here, then copy it into your post.</p>
+
+    <form class="report-controls" id="post-form" novalidate>
+      <div class="field">
+        <label for="post-date">Week of</label>
+        <input id="post-date" name="date" type="date">
+      </div>
+      <div class="field">
+        <button type="button" class="btn btn-ghost" id="regenerate">Start over from the data</button>
+      </div>
+      <p class="help wide">Changing the date redraws the post and replaces your edits. Every number comes from the data and the engine.</p>
+    </form>
+
+    <div class="post-grid">
+      <div class="field">
+        <label for="post-text">Post</label>
+        <textarea id="post-text" class="post-text" rows="24" spellcheck="true"></textarea>
+        <div class="post-actions">
+          <button type="button" class="btn btn-ghost" id="copy">Copy text</button>
+          <span class="help" id="copy-status" role="status"></span>
+        </div>
+      </div>
+      <aside class="post-check" aria-labelledby="check-heading">
+        <h2 id="check-heading">Check before posting</h2>
+        <ul id="check-list"></ul>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="foot"><div class="wrap"><p>Created by Nick Lax · <a href="check.html">Data checklist</a> · <a href="index.html">Back to TrueTab</a></p></div></footer>
+
+  <script src="data/austin-78745.js?v=2026-11-24c"></script>
+  <script src="src/engine.js?v=2026-11-24c"></script>
+  <script src="src/report.js?v=2026-11-24c"></script>
+  <script>
+  {
+    const data = window.MENU_DATA;
+    const R = window.TrueTabReport;
+    const dateInput = document.getElementById("post-date");
+    const text = document.getElementById("post-text");
+    const status = document.getElementById("copy-status");
+    const checkList = document.getElementById("check-list");
+    const site = new URL(".", location.href).href;
+
+    const toggle = document.getElementById("theme-toggle");
+    function syncToggle() {
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      toggle.textContent = dark ? "Light theme" : "Dark theme";
+      toggle.setAttribute("aria-pressed", String(dark));
+    }
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("truetab-theme", next); } catch (e) {}
+      syncToggle();
+    });
+    syncToggle();
+
+    const d = new Date();
+    dateInput.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    function li(...kids) {
+      const n = document.createElement("li");
+      for (const k of kids) n.append(k instanceof Node ? k : document.createTextNode(k));
+      return n;
+    }
+    function strong(t) { const n = document.createElement("strong"); n.textContent = t; return n; }
+
+    function draw() {
+      const w = R.weeklyRoundup(data, { date: dateInput.value || undefined });
+      text.value = R.roundupText(w, site);
+      status.textContent = "";
+      const items = [];
+      for (const deal of [...w.real, ...w.small, ...w.notWorth]) {
+        if (deal.note) items.push(li(strong(deal.restaurantName + ": "), `"${deal.title}". ${deal.note}`));
+      }
+      const unverified = data.restaurants.filter((r) => r.verifiedBy !== "nick").map((r) => r.name);
+      if (unverified.length) items.push(li(strong("Not yet verified by you: "), unverified.join(", ") + ". Check each menu against the data first (PLAN.md, M2)."));
+      items.push(li(strong("Estimates: "), "keep \"est.\" and \"estimated\" next to every dollar amount, and the \"How we measure\" line at the end."));
+      checkList.replaceChildren(...items);
+    }
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(text.value);
+        status.textContent = "Copied.";
+      } catch (e) {
+        text.select();
+        status.textContent = "Couldn't copy automatically. The text is selected: press Ctrl+C.";
+      }
+    });
+    dateInput.addEventListener("change", draw);
+    document.getElementById("regenerate").addEventListener("click", draw);
+    draw();
+  }
+  </script>
+</body>
+</html>
