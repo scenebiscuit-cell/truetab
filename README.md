@@ -21,6 +21,7 @@ Created by Nick Lax.
 - **Honest portions:** every item says where its portion size came from: the restaurant, customer reports, or a typical amount for that kind of dish. Cards say "Some portions estimated" when any guess was used.
 - **Price breakdown** for every order, and a comparison of every way to order from that spot.
 - **Compare a dish:** the same kind of dish across restaurants, with price per portion and a Cheaper / About the same / Pricier tag against the typical price.
+- **One thing at a time:** the home page uses tabs for its views, the search settings, How it works, and each result card's details. A one-line summary always shows the settings in other tabs.
 - Light and dark themes, keyboard friendly, no accessibility issues found by axe-core.
 
 ## How the math works
