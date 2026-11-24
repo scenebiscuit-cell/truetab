@@ -42,7 +42,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - **Do512, happy-hour sites, roundup lists:** a lead list to check against the restaurant, plus a link when a spot isn't verified yet. Ask DoStuff Media (Do512's Austin-based parent company) about a partner data feed.
 - **Restaurants:** later, they submit their own specials (M6).
 - **Never:** scripts that copy from DoorDash, Uber Eats, Grubhub, Yelp, Instagram, Facebook, Do512 or other listing sites. Automated feeds only with written permission.
-- Each restaurant keeps a `sources` list and a `lastChecked` date. `check.html` shows who is due.
+- Each restaurant keeps a `sources` list and a `lastChecked` date. `check.html` shows who is due, and every Monday a GitHub issue (from `scripts/weekly-check.js`) lists up to 10 restaurants to check, oldest first, plus deals to re-verify.
 
 ## Decisions
 
@@ -64,6 +64,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Ratings aren't stored (Google, Yelp and Tripadvisor terms). "Best value" sorting is hidden until live ratings exist; results sort by price.
 - 2026-11-22: Deal verdict thresholds: "Real deal" needs 10%+ savings with no warning signs; a price rise in the 60 days before the deal, or a deal price above the typical price for similar dishes, drops it to "Small saving"; anything that loses to ordering without a deal is "Not worth it". "Typical" needs at least two items of that dish type.
 - 2026-11-22: Restaurants are hidden when closed at the chosen time; ones without hours on file are shown.
+- 2026-11-24: Automatic price checks: Nick chose a weekly reminder over automated price copying (copying would break rule 5 and the ordering platforms' terms). A GitHub Action opens a Monday issue with up to 10 restaurants, oldest checks first. To scale past a few dozen restaurants: check menus on a rotation rather than all weekly, AI-assisted entry (M4), and restaurants submitting their own prices (M6).
 - 2026-11-24: New look, the "guest check" (green diner order pad), chosen by Nick so TrueTab no longer looks like his other sites. Replaces the Nick Lax 2026 Design System for TrueTab only. Fonts: Archivo, Public Sans, Courier Prime.
 - 2026-11-24: Home page redesigned around tabs so less shows at once (Nick's request): page tabs (Feed my group, Compare a dish, How it works), search settings in 4 tabs with an always-visible settings line, and each result card's details in tabs. The hero's small label above the headline was removed.
 - 2026-11-23: Replaced Super Bowl Restaurant with Bee Dumpling (1901 W William Cannon Dr #115) at Nick's choice. Song La (Thicket Food Park, 7800 S 1st St) is a candidate with full prices on its own Square ordering page; held for later.
