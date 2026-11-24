@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Courier+Prime:wght@400;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="src/styles.css?v=2026-11-24f">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-24g">
   <script>
     (function () {
       var saved = null;
@@ -54,12 +54,12 @@
 
   <footer class="foot"><div class="wrap"><p>Created by Nick Lax · <a href="report.html">Restaurant report builder</a> · <a href="post.html">Weekly post draft</a> · <a href="index.html">Back to TrueTab</a></p></div></footer>
 
-  <script src="data/austin-78745.js?v=2026-11-24f"></script>
-  <script src="src/engine.js?v=2026-11-24f"></script>
+  <script src="data/austin-78745.js?v=2026-11-24g"></script>
+  <script src="src/engine.js?v=2026-11-24g"></script>
   <script>
   {
     const data = window.MENU_DATA;
-    const DUE_DAYS = 7;
+    const DUE_DAYS = 60; // same baseline as scripts/weekly-check.js
     const today = new Date();
     const SOURCE_NAMES = { website: "Website", toast: "Toast", instagram: "Instagram", facebook: "Facebook", do512: "Do512" };
     const daysSince = (iso) => Math.floor((today - new Date(iso + "T12:00:00")) / 86400000);
@@ -76,7 +76,7 @@
       .sort((a, b) => b.age - a.age);
     const due = rows.filter((x) => x.age >= DUE_DAYS).length;
     document.getElementById("check-summary").textContent =
-      `${due} of ${rows.length} restaurants are due (not checked in ${DUE_DAYS}+ days).` + (data.meta.isSample ? " Sample data: links are empty." : " Add Instagram and Facebook links as you find them.");
+      `${due} of ${rows.length} restaurants are due (not checked in ${DUE_DAYS}+ days). The Monday GitHub issue can bring a menu forward sooner when ingredient or restaurant prices jump.` + (data.meta.isSample ? " Sample data: links are empty." : " Add Instagram and Facebook links as you find them.");
 
     const body = document.querySelector("#check-table tbody");
     for (const { r, age } of rows) {

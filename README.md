@@ -17,7 +17,7 @@ Created by Nick Lax.
 - **Reviews side by side:** links to each restaurant's Google, Yelp and Tripadvisor pages. Live ratings are planned.
 - **Restaurant report** (`report.html`, linked from the checklist): a 2-page value check for one restaurant, with ranks, app vs. pickup, promo verdicts, portions and tested suggestions. Competitors are anonymized by default. Print it to PDF.
 - **Weekly post draft** (`post.html`, linked from the checklist): "78745 Real Deals" written from the data, with a list of things to check before posting. Copy, edit, post.
-- **Weekly reminder:** every Monday a GitHub issue lists what to check by hand that week: up to 10 restaurants, oldest checks first, plus deals to re-verify. It only reads TrueTab's own data; it never visits a restaurant's site or an app.
+- **Weekly reminder, driven by market prices:** every Monday a GitHub issue lists what to check by hand that week. A menu is due every 60 days, or sooner when government price data shows restaurant prices in the South up 2% or an ingredient it uses (beef, chicken, pork, eggs, rice, bread) up 8% since its last check. Up to 10 a week, deals re-verified weekly. Only `scripts/fetch-market.js` goes online, and only to the U.S. Bureau of Labor Statistics; nothing visits a restaurant's site or an app.
 - **Data checklist** (`check.html`): which restaurants are due for a weekly check, with links to their website and social pages, plus menu price changes found in the last 30 days.
 - **Honest portions:** every item says where its portion size came from: the restaurant, customer reports, or a typical amount for that kind of dish. Cards say "Some portions estimated" when any guess was used.
 - **Price breakdown** for every order, and a comparison of every way to order from that spot.
@@ -60,9 +60,10 @@ npm test
 | `check.html` | Weekly data checklist |
 | `tests/engine.test.js` | 41 engine tests (sample data) |
 | `tests/real-data.test.js` | 15 checks on the real data |
-| `scripts/weekly-check.js` | Writes the weekly hand-check list (no web access) |
+| `scripts/fetch-market.js` | Fetches monthly price data from the BLS public API (its only web access) |
+| `scripts/weekly-check.js` | Writes the weekly hand-check list from the data and the price data (no web access) |
 | `.github/workflows/weekly-check.yml` | Runs it every Monday and opens the GitHub issue |
-| `tests/weekly-check.test.js` | 6 tests for the weekly list, including that it never fetches web pages |
+| `tests/weekly-check.test.js` | 11 tests for the weekly list and market triggers, including that only the BLS is ever contacted |
 | `tests/report.test.js` | 15 restaurant report and weekly post tests (real data) |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones, decisions and the money plan |

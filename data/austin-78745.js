@@ -171,7 +171,7 @@
         channelFees: {},
         items: [
           { id: "so-chicken", name: "Chicken taco árabe", dishType: "taco-large", prices: { direct: 6.0 } },
-          { id: "so-pastor", name: "Lamb al pastor taco árabe", dishType: "taco-large", prices: { direct: 7.5 } },
+          { id: "so-pastor", name: "Lamb al pastor taco árabe", dishType: "taco-large", costDrivers: [], prices: { direct: 7.5 } }, // lamb: no government price series
           { id: "so-steak", name: "Steak taco árabe", dishType: "taco-large", prices: { direct: 7.5 } },
           { id: "so-fries", name: "Somos fries", dishType: "fries", prices: { direct: 6.0 } }
         ]

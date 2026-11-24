@@ -1,6 +1,9 @@
 # Every Monday morning, open a GitHub issue listing what to check by hand this week.
-# It only reads TrueTab's own data file; it never visits a restaurant's site or any app.
+# Step 1 fetches monthly government price data (api.bls.gov only) to spot ingredient and restaurant
+# price jumps. Step 2 reads only TrueTab's own data file plus that price data; it never visits a
+# restaurant's site or any app. If step 1 fails, the issue still opens, with a 30-day schedule.
 # Run it any time from the repo's Actions tab: "Weekly price check" -> "Run workflow".
+# Optional: add a free BLS API key as the repository secret BLS_API_KEY for higher limits.
 name: Weekly price check
 
 on:
@@ -18,8 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch monthly price data (U.S. Bureau of Labor Statistics)
+        continue-on-error: true
+        run: node scripts/fetch-market.js market.json
+        env:
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+
       - name: Write this week's checklist
-        run: node scripts/weekly-check.js --title-file title.txt --body-file body.md
+        run: node scripts/weekly-check.js --market market.json --title-file title.txt --body-file body.md
         env:
           SITE_URL: https://scenebiscuit.com/truetab/
 
