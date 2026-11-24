@@ -56,7 +56,7 @@ npm test
 | `check.html` | Weekly data checklist |
 | `tests/engine.test.js` | 38 engine tests (sample data) |
 | `tests/real-data.test.js` | 14 checks on the real data |
-| `tests/report.test.js` | 12 restaurant report tests (real data) |
+| `tests/report.test.js` | 13 restaurant report tests (real data) |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones, decisions and the money plan |
 | `PITCH.md` | Restaurant report listing, outreach message and sample report |
