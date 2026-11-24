@@ -46,30 +46,43 @@
   });
   syncThemeButton();
 
-  /* ---------- Tabs ---------- */
-  const tabs = [
-    { tab: $("tab-feed"), view: $("view-feed") },
-    { tab: $("tab-dish"), view: $("view-dish") }
-  ];
-  function selectTab(i, focus) {
-    tabs.forEach((t, j) => {
-      const on = i === j;
-      t.tab.setAttribute("aria-selected", String(on));
-      t.tab.tabIndex = on ? 0 : -1;
-      t.view.hidden = !on;
-    });
-    if (focus) tabs[i].tab.focus();
-  }
-  tabs.forEach((t, i) => {
-    t.tab.addEventListener("click", () => selectTab(i));
-    t.tab.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+  /* ---------- Tabs (page, search settings, How it works, each result card) ---------- */
+  // Click, or Left/Right/Home/End on a focused tab, shows its panel. Returns select(i).
+  function wireTabs(tabEls, panelEls, onSelect) {
+    function select(i, focus) {
+      tabEls.forEach((t, j) => {
+        const on = i === j;
+        t.setAttribute("aria-selected", String(on));
+        t.tabIndex = on ? 0 : -1;
+        panelEls[j].hidden = !on;
+      });
+      if (focus) tabEls[i].focus();
+      if (onSelect) onSelect(i);
+    }
+    tabEls.forEach((t, i) => {
+      t.addEventListener("click", () => select(i));
+      t.addEventListener("keydown", (e) => {
+        const n = tabEls.length;
+        const to = { ArrowRight: (i + 1) % n, ArrowLeft: (i + n - 1) % n, Home: 0, End: n - 1 }[e.key];
+        if (to === undefined) return;
         e.preventDefault();
-        selectTab((i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length, true);
-      }
+        select(to, true);
+      });
     });
+    select(Math.max(0, tabEls.findIndex((t) => t.getAttribute("aria-selected") === "true")));
+    return select;
+  }
+  // A tablist already in the page: its tabs name their panels with aria-controls.
+  function wireStaticTabs(list) {
+    const tabEls = [...list.querySelectorAll('[role="tab"]')];
+    return wireTabs(tabEls, tabEls.map((t) => $(t.getAttribute("aria-controls"))));
+  }
+  const showView = wireStaticTabs(document.querySelector('.tabs[role="tablist"]'));
+  document.querySelectorAll('.subtabs[role="tablist"]').forEach(wireStaticTabs);
+  $("notice-how").addEventListener("click", (e) => {
+    e.preventDefault();
+    showView(2, true);
   });
-  selectTab(0);
 
   /* ---------- Feed my group ---------- */
   const hasRatings = data.restaurants.some((r) => r.rating && typeof r.rating.stars === "number");
@@ -151,8 +164,25 @@
     };
   }
 
+  // One line that always shows the settings tucked away in the other search tabs.
+  function settingsLine(q) {
+    const label = (id) => $(id).selectedOptions[0].textContent.replace(/\s*\(.*\)$/, "");
+    const parts = [label("mode"), $("when-day").value === "now" ? "right now" : `${DAYS[q.when.day]} at ${clock(q.when.minutes)}`];
+    if (q.cuisines.length < allCuisines.length) parts.push(`${q.cuisines.length} of ${allCuisines.length} cuisines`);
+    if (q.diet.length) parts.push(q.diet.map((d) => data.dietTags[d].toLowerCase()).join(" and ") + " only");
+    if (q.dealsOnly) parts.push("deals only");
+    parts.push(q.tipPct ? `tip ${label("tip")}` : "no tip", `app markup ${label("markup")}`);
+    $("settings-line").replaceChildren(el("strong", {}, "Search settings: "), parts.join(" · "));
+  }
+  function clock(minutes) {
+    const h = Math.floor(minutes / 60);
+    const m = String(minutes % 60).padStart(2, "0");
+    return `${h % 12 || 12}:${m} ${h < 12 ? "am" : "pm"}`;
+  }
+
   function renderFeed() {
     const q = readQuery();
+    settingsLine(q);
     const box = $("results");
     box.replaceChildren();
     if (q.adults + q.kids === 0) {
@@ -185,10 +215,10 @@
       box.append(el("div", { class: "empty" }, el("p", {}, `${why} Try more cuisines, a different diet setting, or another way to eat.`)));
       return;
     }
-    out.results.forEach((r, i) => box.append(card(r, out, q, i === 0 && r.status === "fits")));
+    out.results.forEach((r, i) => box.append(card(r, out, q, i === 0 && r.status === "fits", i)));
   }
 
-  function card(r, out, q, topPick) {
+  function card(r, out, q, topPick, n) {
     const b = r.best;
     const st = STATUS[r.status];
     const rating = r.restaurant.rating;
@@ -215,8 +245,7 @@
       ["Tax", p.tax],
       p.tip ? ["Tip", p.tip] : null
     ].filter(Boolean);
-    const breakdown = el("details", {},
-      el("summary", {}, "Price breakdown"),
+    const breakdown = [
       el("table", { class: "breakdown" },
         el("tbody", {},
           rows.map(([k, v]) => el("tr", {}, el("td", {}, k), el("td", {}, money(v)))),
@@ -226,26 +255,40 @@
       b.estimated
         ? el("p", { class: "help" }, `${b.channelLabel} menu prices are estimated at ${Math.round(b.markupPct * 100)}% above the restaurant's own prices. Fees are typical values, not a quote.`)
         : null
-    );
-    const channels = el("details", {},
-      el("summary", {}, `Compare ${r.options.length} way${r.options.length === 1 ? "" : "s"} to order`),
-      el("table", { class: "channels" },
-        el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Option"), el("th", { scope: "col" }, "Est. all-in"))),
-        el("tbody", {},
-          r.options.map((o, i) =>
-            el("tr", { class: i === 0 ? "cheapest" : null },
-              el("td", {}, o.channelLabel + (o.estimated ? " (estimated)" : "")
-                + (o.check ? ` (deal: ${VERDICT[o.check.verdict][0].toLowerCase()})` : "") + (i === 0 ? " (cheapest)" : "")),
-              el("td", {}, money(o.price.total)))
-          )
+    ];
+    const channels = el("table", { class: "channels" },
+      el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Option"), el("th", { scope: "col" }, "Est. all-in"))),
+      el("tbody", {},
+        r.options.map((o, i) =>
+          el("tr", { class: i === 0 ? "cheapest" : null },
+            el("td", {}, o.channelLabel + (o.estimated ? " (estimated)" : "")
+              + (o.check ? ` (deal: ${VERDICT[o.check.verdict][0].toLowerCase()})` : "") + (i === 0 ? " (cheapest)" : "")),
+            el("td", {}, money(o.price.total)))
         )
       )
     );
+
+    // Details live in tabs; only the ones that have something to show are added.
+    const sections = [
+      ["order", "Order", [lines, el("p", { class: "meta" }, CONFIDENCE[b.confidence] || "")]],
+      ["price", "Price breakdown", breakdown],
+      r.options.length > 1 ? ["ways", "Ways to order", [channels]] : null,
+      b.check ? ["deal", "Deal check", [dealBlock(b)]] : null,
+      ["reviews", "Reviews", [reviewLinks(r.restaurant), sourceLine(r.restaurant)]]
+    ].filter(Boolean);
+    const id = (key, part) => `r${n}-${part}-${key}`;
+    const tabEls = sections.map(([key, label], i) =>
+      el("button", { type: "button", class: "subtab", role: "tab", id: id(key, "tab"), "aria-controls": id(key, "panel"),
+        "aria-selected": String(i === 0) }, label));
+    const panelEls = sections.map(([key, , body]) =>
+      el("div", { class: "subpanel card-panel", role: "tabpanel", id: id(key, "panel"), "aria-labelledby": id(key, "tab"), tabindex: "0" }, body));
+    wireTabs(tabEls, panelEls);
+
     const extra = b.order.portions - out.portions;
+    const verdict = b.check ? VERDICT[b.check.verdict] : null;
     return el("article", { class: "card" + (topPick ? " top-pick" : "") },
       el("div", { class: "card-head" },
         el("div", {},
-          topPick ? el("p", { class: "label" }, "Top pick") : null,
           el("h3", {}, r.restaurant.name),
           el("p", { class: "meta" },
             r.restaurant.neighborhood,
@@ -254,8 +297,10 @@
             r.restaurant.address ? el("span", { class: "addr" }, r.restaurant.address) : null)
         ),
         el("div", { class: "tags" },
+          topPick ? el("span", { class: "tag tag-top" }, "Top pick") : null,
           el("span", { class: `tag ${st.cls}` }, st.text),
-          b.bogo ? el("span", { class: "tag tag-bogo" }, "BOGO") : null)
+          b.bogo ? el("span", { class: "tag tag-bogo" }, "BOGO") : null,
+          verdict ? el("span", { class: `tag ${verdict[1]}` }, verdict[0]) : null)
       ),
       el("div", { class: "price-row" },
         el("span", { class: "price" }, "est. " + money(p.total)),
@@ -265,13 +310,9 @@
         b.freeKids
           ? `. Buys ${fmt(b.order.portions)} adult portions; ${b.freeKids} kids' meal${b.freeKids === 1 ? " is" : "s are"} free.`
           : `. Feeds ${portionWord(b.order.portions)}` + (extra > 0.05 ? ` (${fmt(extra)} extra).` : ".")),
-      dealBlock(b),
-      lines,
-      el("p", { class: "meta" }, CONFIDENCE[b.confidence] || ""),
-      breakdown,
-      r.options.length > 1 ? channels : null,
-      reviewLinks(r.restaurant),
-      sourceLine(r.restaurant)
+      el("div", { class: "card-tabs" },
+        el("div", { class: "subtabs subtabs-card", role: "tablist", "aria-label": `${r.restaurant.name} details` }, tabEls),
+        panelEls)
     );
   }
 
