@@ -17,7 +17,9 @@ TrueTab has its own look, **the guest check**: the green diner order pad a serve
 ## Layout
 
 - Show one thing at a time. The home page uses tabs: page tabs (Feed my group, Compare a dish, How it works) are condensed caps underlined in `stamp`; tabs inside a view (search settings, How it works topics, each result card's details) are tickets, selected = `accent-soft` with a solid `accent` border. Every tab is at least 44px tall and works with Left/Right/Home/End.
-- Settings hidden in another tab are always summarized in one visible line ("Search settings: ...").
+- Feed my group is step by step: numbered step tabs (the number in a small stamped box), Back / Next, and a solid `accent` **Show results** button on every step, the one filled button on the page. Results appear after Show results, then update live.
+- Settings hidden in another step are always summarized in one visible line ("Search settings: ...").
+- Cuisine is a filter above the results, not a search setting: ticket chips with counts, "All" selected by default, a cuisine with no results greyed out. It never remembers a choice between visits.
 - Each result card always shows its name, tags, estimated total and cheapest way to order; the order, price breakdown, ways to order, deal check and reviews are its tabs.
 
 ## Meaning
