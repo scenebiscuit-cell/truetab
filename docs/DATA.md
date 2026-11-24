@@ -52,6 +52,7 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 - `sources` are links only, never copied content. `lastChecked` is the date you last looked at them.
 - `history` (optional): earlier prices, newest last, e.g. `history: [{ date: "2026-11-22", direct: 9.49 }]`. On each weekly check, when a price has changed, move the old price and its `lastChecked` date into `history` before updating `prices`. The deal check uses this to catch prices raised shortly before a deal, and `check.html` lists every change from the last 30 days.
 - `promo: "bogo"` with `pairOf: "<single item id>"` marks a restaurant's own two-for-one item, so the deal check can compare it with buying two singly.
+- `costDrivers` (optional): which ingredient prices an item follows, from `beef`, `chicken`, `pork`, `eggs`, `rice`, `bread`. Normally guessed from the item's name (`scripts/weekly-check.js`); set it to override the guess, or `[]` when none fits (e.g. lamb). The weekly reminder uses it to bring a menu forward when those prices jump. Can also be set on a dish type.
 - A `defaultServes` of 0 marks an add-on (queso, fries, sides) that doesn't count toward feeding anyone.
 
 ## Deals
