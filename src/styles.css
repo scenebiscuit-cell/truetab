@@ -1,25 +1,30 @@
-/* TrueTab styles. Tokens copied from the Nick Lax 2026 Design System (see DESIGN.md). */
+/*
+ * TrueTab styles: the "guest check" look, TrueTab's own (see DESIGN.md).
+ * The green diner order pad a server writes your tab on: pale ruled green paper,
+ * deep green ink, carbon-red check numbers and totals.
+ */
 
 :root {
-  --paper: #eee7d8; --paper-raised: #f8f4ec; --paper-sunken: #e3dac8;
-  --line: #d3c9b6; --line-strong: #847a69;
-  --ink: #1a1712; --ink-muted: #5a5244;
-  --accent: #1f3fd8; --accent-hover: #1631b0; --accent-soft: #dce1f8; --on-accent: #ffffff;
-  --marker: #f6cf3f; --on-marker: #1a1712; --flare: #e0552f; --moss: #1c7a66;
-  --success: #0b7353; --success-soft: #d3ece1;
-  --warning: #94570a; --warning-soft: #f6e2be;
-  --danger: #b42318; --danger-soft: #f6dad4;
-  --glass: rgba(248, 244, 236, 0.86);
-  --shadow-lift: 0 1px 0 rgba(26, 23, 18, 0.06), 0 12px 28px -14px rgba(26, 23, 18, 0.35);
-  --shadow-print: 4px 4px 0 #1a1712;
+  --paper: #e6eedd; --paper-raised: #f4f8ee; --paper-sunken: #d8e3cc;
+  --line: #bccdae; --line-strong: #5f7757;
+  --ink: #142a1d; --ink-muted: #435a48;
+  --accent: #1d6a43; --accent-hover: #155234; --accent-soft: #d2e7d6; --on-accent: #ffffff;
+  --stamp: #b3261e; --stamp-soft: #f6dcd6;
+  --marker: #f3d36b; --on-marker: #142a1d; --flare: #c9492c; --moss: #1d6a43;
+  --success: #0b6b4b; --success-soft: #cfe8da;
+  --warning: #8a5208; --warning-soft: #f3e3bd;
+  --danger: #a3231a; --danger-soft: #f4d8d2;
+  --glass: rgba(244, 248, 238, 0.94);
+  --shadow-lift: 0 1px 0 rgba(20, 42, 29, 0.08), 0 14px 26px -16px rgba(20, 42, 29, 0.45);
+  --shadow-print: 0 1px 0 rgba(20, 42, 29, 0.08), 0 18px 32px -18px rgba(20, 42, 29, 0.55);
 
-  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Courier Prime", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
   --space-6: 32px; --space-7: 48px; --space-8: 64px; --space-9: 96px;
-  --radius-sm: 4px; --radius-md: 10px; --radius-lg: 20px; --radius-pill: 999px;
+  --radius-sm: 2px; --radius-md: 3px; --radius-lg: 4px; --radius-pill: 3px;
   --fluid-display: clamp(2.5rem, 1.6rem + 4.5vw, 5.5rem);
   --fluid-title-2: clamp(1.5rem, 1.25rem + 1.25vw, 2.25rem);
   --fluid-gutter: clamp(1rem, 0.5rem + 2.5vw, 2rem);
@@ -30,18 +35,20 @@
   color-scheme: light;
 }
 
+/* Dark: the same check under the diner's late-night lights. */
 [data-theme="dark"] {
-  --paper: #14120e; --paper-raised: #1e1b16; --paper-sunken: #0d0c09;
-  --line: #36312a; --line-strong: #7d7465;
-  --ink: #eee7d8; --ink-muted: #b2a996;
-  --accent: #93a5ff; --accent-hover: #b4c0ff; --accent-soft: #232a57; --on-accent: #0a0f33;
-  --flare: #ff8a66; --moss: #4fc1a6;
-  --success: #5ccb9f; --success-soft: #11342a;
-  --warning: #f0b44c; --warning-soft: #3a2a0e;
-  --danger: #ff8f80; --danger-soft: #3e1813;
-  --glass: rgba(30, 27, 22, 0.86);
-  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 14px 30px -14px rgba(0, 0, 0, 0.7);
-  --shadow-print: 4px 4px 0 #eee7d8;
+  --paper: #0f1913; --paper-raised: #16241b; --paper-sunken: #0a120d;
+  --line: #2b3d31; --line-strong: #6f8a73;
+  --ink: #e3eddb; --ink-muted: #a8bba8;
+  --accent: #82d3a5; --accent-hover: #a5e3bf; --accent-soft: #1d3a29; --on-accent: #0a1a10;
+  --stamp: #ff8676; --stamp-soft: #3d1a16;
+  --marker: #e9c75a; --on-marker: #142a1d; --flare: #ff8a66; --moss: #82d3a5;
+  --success: #6fd0a2; --success-soft: #133325;
+  --warning: #f0b44c; --warning-soft: #36280e;
+  --danger: #ff8f80; --danger-soft: #3b1712;
+  --glass: rgba(22, 36, 27, 0.95);
+  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 14px 30px -14px rgba(0, 0, 0, 0.75);
+  --shadow-print: 0 1px 0 rgba(0, 0, 0, 0.4), 0 18px 34px -16px rgba(0, 0, 0, 0.85);
   color-scheme: dark;
 }
 
@@ -221,10 +228,11 @@ a.brand { color: var(--ink); text-decoration: none; }
 @media print {
   @page { size: letter; margin: 11mm 13mm; }
   html[data-theme] {
-    --paper: #fff; --paper-raised: #fff; --paper-sunken: #f2f0eb; --line: #cfc8ba; --line-strong: #847a69;
-    --ink: #1a1712; --ink-muted: #4d463a; --accent: #1f3fd8; --accent-soft: #e8ebfa;
-    --success: #0b7353; --success-soft: #d3ece1; --warning: #94570a; --warning-soft: #f6e2be;
-    --danger: #b42318; --danger-soft: #f6dad4; color-scheme: light;
+    --paper: #fff; --paper-raised: #fff; --paper-sunken: #eef3e8; --line: #c4d2b8; --line-strong: #5f7757;
+    --ink: #142a1d; --ink-muted: #435a48; --accent: #1d6a43; --accent-soft: #e3f0e5;
+    --stamp: #b3261e; --stamp-soft: #f6dcd6;
+    --success: #0b6b4b; --success-soft: #cfe8da; --warning: #8a5208; --warning-soft: #f3e3bd;
+    --danger: #a3231a; --danger-soft: #f4d8d2; color-scheme: light;
   }
   body { font-size: 11pt; line-height: 1.33; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .top, .foot, .report-controls, .screen-only, .skip { display: none !important; }
@@ -294,3 +302,50 @@ a.brand { color: var(--ink); text-decoration: none; }
 .view.how { padding-top: var(--space-6); padding-bottom: var(--space-8); }
 .view.how h2 { margin-bottom: var(--space-4); }
 .view.how .subpanel ul { margin-top: var(--space-2); }
+
+/* ---------- Guest check look (TrueTab's own; see DESIGN.md) ---------- */
+/* Printed-header voice: condensed caps for the brand and page tabs. */
+.top { background: var(--paper-raised); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 3px double var(--line-strong); }
+.brand { font: 800 24px/1 var(--font-display); font-stretch: 72%; text-transform: uppercase; letter-spacing: 0.03em; }
+h1 { font-weight: 800; font-stretch: 78%; letter-spacing: -0.02em; line-height: 0.95; }
+h2, h3 { font-stretch: 88%; }
+.mark { background: linear-gradient(var(--stamp), var(--stamp)) no-repeat 0 96% / 100% 0.08em; padding: 0; }
+.notice { border: 1px dashed var(--line-strong); }
+
+.tab { font: 700 15px/1 var(--font-display); font-stretch: 85%; text-transform: uppercase; letter-spacing: 0.06em; }
+.tab[aria-selected="true"] { border-bottom-color: var(--stamp); }
+
+/* Tabs inside a view: tear-off tickets. */
+.subtab { border-style: dashed; }
+.subtab[aria-selected="true"] { border-style: solid; background: var(--accent-soft); border-color: var(--accent); }
+
+.search { border: 1px solid var(--line-strong); border-top-width: 3px; border-top-style: double; }
+
+/* Each result is a guest check: a printed header strip with its number, ruled order lines,
+   a carbon-red total, and a torn bottom edge. */
+.results { counter-reset: check; }
+.card { --pad: var(--space-5); counter-increment: check; border: 1px solid var(--line-strong); border-bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.card::before { content: "Guest check"; content: "Guest check  ·  No. " counter(check) / ""; display: block;
+  margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) 0; padding: var(--space-2) var(--pad);
+  background: var(--paper-sunken); border-bottom: 1px solid var(--line-strong);
+  font: 700 12px/1.3 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--stamp); white-space: pre; }
+.card::after { content: ""; display: block; height: 10px; margin: auto calc(-1 * var(--pad)) calc(-1 * var(--pad));
+  background: radial-gradient(circle at 7px 10px, var(--paper) 5px, transparent 5.6px) 0 0 / 14px 10px repeat-x,
+    linear-gradient(var(--paper-raised), var(--paper-raised)); }
+.card.top-pick { border-color: var(--accent); box-shadow: var(--shadow-print); }
+.card h3 { font-size: 24px; font-weight: 750; letter-spacing: -0.005em; }
+.price-row { border-top: 3px double var(--line-strong); padding-top: var(--space-3); }
+.price-row::before { content: "Total"; align-self: center; font: 700 12px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); }
+.price { font: 700 clamp(28px, 2.2vw + 14px, 34px)/1 var(--font-mono); letter-spacing: -0.04em; color: var(--stamp); white-space: nowrap; }
+.lines li { border-bottom-color: var(--line); }
+.lines .num, .breakdown td:last-child, .channels td:last-child { font-family: var(--font-mono); font-weight: 700; }
+
+/* Tags read as rubber stamps. */
+.tag { border: 1px solid currentColor; font-weight: 700; border-radius: var(--radius-sm); }
+.tag-same { border-color: var(--line-strong); }
+.tag-bogo { border-color: var(--on-marker); }
+.tag-top { background: var(--stamp-soft); color: var(--stamp); border-width: 2px; transform: rotate(-4deg); letter-spacing: 0.12em; }
+@media (prefers-reduced-motion: reduce) { .tag-top { transform: none; } }
+
+.page-title, .doc h1, .how h2, .view.how h2, .check-h2, .doc-section h2, .post-check h2 { font-stretch: 85%; }
+::selection { background: var(--accent-soft); color: var(--ink); }
