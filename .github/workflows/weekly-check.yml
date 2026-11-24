@@ -1,0 +1,34 @@
+# Every Monday morning, open a GitHub issue listing what to check by hand this week.
+# It only reads TrueTab's own data file; it never visits a restaurant's site or any app.
+# Run it any time from the repo's Actions tab: "Weekly price check" -> "Run workflow".
+name: Weekly price check
+
+on:
+  schedule:
+    - cron: "0 14 * * 1" # Mondays 14:00 UTC (8 am in Austin in winter, 9 am in summer)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  checklist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write this week's checklist
+        run: node scripts/weekly-check.js --title-file title.txt --body-file body.md
+        env:
+          SITE_URL: https://scenebiscuit.com/truetab/
+
+      - name: Replace last week's issue with this week's
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create weekly-check --color 1d6a43 --description "Weekly hand price check" --force
+          for n in $(gh issue list --label weekly-check --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Replaced by this week's checklist."
+          done
+          gh issue create --title "$(cat title.txt)" --body-file body.md --label weekly-check
