@@ -504,10 +504,88 @@
     };
   }
 
+  /* ---------- Weekly "Real Deals" post ---------- */
+
+  /*
+   * What the weekly post says, as data: the cheapest spot for 1 adult (pickup, weekday lunch) and a
+   * family of 4 (pickup, weekday dinner), the biggest estimated app vs. pickup gap, and every deal
+   * graded at a time it runs. Real restaurant names: the post is public, like the main page.
+   * opts: { date: "YYYY-MM-DD" }
+   */
+  function weeklyRoundup(data, opts) {
+    const date = opts && opts.date;
+    const cheapest = (scenario, time) => rankAt(data, null, scenario, whenAt(time, date)).table[0] || null;
+    const gaps = [];
+    const deals = [];
+    for (const r of data.restaurants) {
+      for (const g of appGap(data, r.id, { date })) gaps.push(Object.assign({ restaurantName: r.name }, g));
+      for (const p of promoReport(data, r.id, { date })) {
+        if (p.verdict) deals.push(Object.assign({ restaurantName: r.name }, p));
+      }
+    }
+    const biggest = (group) => gaps.filter((g) => g.group === group).sort((a, b) => b.extra - a.extra)[0] || null;
+    const checked = data.restaurants.map((r) => r.lastChecked).filter(Boolean).sort();
+    return {
+      date: date || null,
+      area: (data.meta && data.meta.area) || "the area",
+      adult: cheapest("adult-pickup", "lunch"),
+      family: cheapest("family-pickup", "dinner"),
+      gapFamily: biggest("Family of 4"),
+      gapAdult: biggest("1 adult"),
+      real: deals.filter((d) => d.verdict === "real"),
+      small: deals.filter((d) => d.verdict === "small"),
+      notWorth: deals.filter((d) => d.verdict === "not-worth-it"),
+      checkedFrom: checked[0] || null,
+      checkedTo: checked[checked.length - 1] || null
+    };
+  }
+
+  function shortDate(iso) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const [y, m, d] = iso.split("-").map(Number);
+    return `${months[m - 1]} ${d}, ${y}`;
+  }
+
+  // The post as plain text, ready to edit and paste. Every dollar amount says "est." or "estimated";
+  // deal names are quoted as the restaurant wrote them.
+  function roundupText(w, siteUrl) {
+    const lines = [];
+    lines.push(`${w.area} Real Deals${w.date ? `: week of ${shortDate(w.date)}` : ""}`);
+    lines.push("");
+    if (w.adult) lines.push(`Cheapest way to feed one adult (pickup, weekday lunch): ${w.adult.name}, est. ${money(w.adult.total)} all-in.`);
+    if (w.family) lines.push(`Cheapest way to feed a family of 4 (2 adults, 2 kids, pickup, weekday dinner): ${w.family.name}, est. ${money(w.family.total)} all-in.`);
+    if (w.gapFamily) {
+      const g = w.gapFamily;
+      lines.push("");
+      lines.push(`Biggest app markup: ordering ${g.restaurantName} on ${g.channelLabel} costs a family of 4 an estimated ${money(g.extra)} more than pickup (est. ${money(g.app)} vs. est. ${money(g.pickup)}).`);
+    }
+    const dealLine = (d) => `- ${d.restaurantName}: "${d.title}"${d.check && d.check.saving > 0.005 ? `, saves an estimated ${money(d.check.saving)} (${d.check.pct}%)` : ""}.`;
+    lines.push("");
+    lines.push("Real deals (save 10% or more, no warning signs):");
+    lines.push(...(w.real.length ? w.real.map(dealLine) : ["- None this week."]));
+    if (w.small.length) {
+      lines.push("");
+      lines.push("Small savings:");
+      lines.push(...w.small.map(dealLine));
+    }
+    lines.push("");
+    lines.push("Deal traps (cost more than ordering without the deal):");
+    lines.push(...(w.notWorth.length ? w.notWorth.map((d) => `- ${d.restaurantName}: "${d.title}" on ${d.channelLabel}.`) : ["- None found this week."]));
+    lines.push("");
+    const when = w.checkedFrom
+      ? (w.checkedFrom === w.checkedTo ? shortDate(w.checkedFrom) : `${shortDate(w.checkedFrom)} to ${shortDate(w.checkedTo)}`)
+      : "recently";
+    lines.push(`How we measure: menu prices copied by hand from each restaurant's own menu (checked ${when}). App prices and fees are estimates. Rankings come only from the math, and nobody pays to rank.`);
+    lines.push(`TrueTab · Created by Nick Lax${siteUrl ? " · " + siteUrl : ""}`);
+    return lines.join("\n");
+  }
+
   return {
     SCENARIOS,
     TIMES,
     WEEKDAY,
+    weeklyRoundup,
+    roundupText,
     rankFor,
     appGap,
     promoReport,

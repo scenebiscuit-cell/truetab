@@ -190,3 +190,29 @@ test("nothing in report.js changes the data passed in", () => {
   }
   assert.deepEqual(snapshot(), before);
 });
+
+test("weekly roundup: cheapest spots, biggest app gap and graded deals come from the engine", () => {
+  const w = R.weeklyRoundup(real, { date: DATE });
+  assert.equal(w.adult.id, R.rankFor(real, "el-chilito", "adult-pickup", { date: DATE }).lunch.table[0].id);
+  assert.equal(w.family.total, R.rankFor(real, "el-chilito", "family-pickup", { date: DATE }).dinner.table[0].total);
+  const allGaps = ids.flatMap((id) => R.appGap(real, id, { date: DATE })).filter((g) => g.group === "Family of 4");
+  assert.equal(w.gapFamily.extra, Math.max(...allGaps.map((g) => g.extra)));
+  const graded = ids.flatMap((id) => R.promoReport(real, id, { date: DATE })).filter((p) => p.verdict);
+  assert.equal(w.real.length + w.small.length + w.notWorth.length, graded.length);
+  assert.ok(w.real.every((d) => d.verdict === "real"));
+});
+
+test("weekly post text: every dollar amount is labeled an estimate, outside quoted deal names", () => {
+  const data = withTwinPlate();
+  // 10% off on DoorDash still costs more than plain pickup once the app markup and fees are added.
+  data.deals.push({ id: "test-app-pct", restaurantId: "bee-dumpling", title: "10% off dumplings (test)", type: "percent", value: 0.1,
+    appliesTo: { itemIds: ["bd-dump-pork"] }, channels: ["doordash"], expires: "2026-12-31", verified: DATE });
+  const text = R.roundupText(R.weeklyRoundup(data, { date: DATE }), "https://example.com/");
+  const unquoted = text.replace(/"[^"]*"/g, "");
+  const dollars = unquoted.match(/.{0,10}\$\d/g) || [];
+  assert.ok(dollars.length > 3);
+  for (const d of dollars) assert.match(d, /(est\. |estimated )\$\d$/, d);
+  assert.match(text, /Twin Plate \(sample\)/, "a restaurant's own two-for-one appears under real deals");
+  assert.match(text, /Deal traps[^\n]*\n- Bee Dumpling: "10% off dumplings \(test\)" on DoorDash\./, "an app deal that loses to pickup is a trap");
+  assert.match(text, /Created by Nick Lax/);
+});
