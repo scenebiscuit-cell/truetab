@@ -15,6 +15,7 @@ Created by Nick Lax.
 - **Deal check:** every deal is graded Real deal, Small saving or Not worth it, with reasons: savings versus the same order, versus the cheapest way to order without any deal, versus similar dishes nearby, and versus the item's recent prices.
 - **Kids' meals, card surcharges, to-go fees and opening hours** are counted when the menu states them.
 - **Reviews side by side:** links to each restaurant's Google, Yelp and Tripadvisor pages. Live ratings are planned.
+- **Restaurant report** (`report.html`, linked from the checklist): a 2-page value check for one restaurant, with ranks, app vs. pickup, promo verdicts, portions and tested suggestions. Competitors are anonymized by default. Print it to PDF.
 - **Data checklist** (`check.html`): which restaurants are due for a weekly check, with links to their website and social pages.
 - **Honest portions:** every item says where its portion size came from: the restaurant, customer reports, or a typical amount for that kind of dish. Cards say "Some portions estimated" when any guess was used.
 - **Price breakdown** for every order, and a comparison of every way to order from that spot.
@@ -46,13 +47,16 @@ npm test
 |---|---|
 | `index.html` | The page |
 | `src/engine.js` | All the math. No page code, so it can be tested in Node |
-| `src/app.js` | The only file that touches the page |
+| `src/app.js` | The only file that touches the main page |
+| `src/report.js` | Restaurant report math: ranks, app gap, promo check, portions, tested suggestions. No page code |
+| `report.html` | Restaurant report builder (print to PDF) |
 | `src/styles.css` | Styles, from the Nick Lax 2026 Design System |
 | `data/austin-78745.js` | Real 78745 data the page uses |
 | `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
 | `tests/engine.test.js` | 38 engine tests (sample data) |
 | `tests/real-data.test.js` | 13 checks on the real data |
+| `tests/report.test.js` | 12 restaurant report tests (real data) |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones, decisions and the money plan |
 | `PITCH.md` | Restaurant report listing, outreach message and sample report |
