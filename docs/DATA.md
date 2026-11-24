@@ -50,7 +50,7 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 - `tags` (optional) lists diet tags the menu states: `vegetarian`, `vegan`, `gluten-free`. When a visitor picks a diet, meals are built only from items carrying every chosen tag.
 - `cuisines` drives the cuisine checkboxes. Use the same spelling everywhere.
 - `sources` are links only, never copied content. `lastChecked` is the date you last looked at them.
-- `history` (optional): earlier prices, newest last, e.g. `history: [{ date: "2026-11-22", direct: 9.49 }]`. On each weekly check, when a price has changed, move the old price and its `lastChecked` date into `history` before updating `prices`. The deal check uses this to catch prices raised shortly before a deal.
+- `history` (optional): earlier prices, newest last, e.g. `history: [{ date: "2026-11-22", direct: 9.49 }]`. On each weekly check, when a price has changed, move the old price and its `lastChecked` date into `history` before updating `prices`. The deal check uses this to catch prices raised shortly before a deal, and `check.html` lists every change from the last 30 days.
 - `promo: "bogo"` with `pairOf: "<single item id>"` marks a restaurant's own two-for-one item, so the deal check can compare it with buying two singly.
 - A `defaultServes` of 0 marks an add-on (queso, fries, sides) that doesn't count toward feeding anyone.
 

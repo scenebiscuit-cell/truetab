@@ -305,3 +305,32 @@ test("typical price per portion needs at least two items of that dish type", () 
   assert.ok(med["burger"]);
   assert.equal(med["burger-family"], undefined); // only one in the sample
 });
+
+test("price changes: a price that moved since the last check is listed with the old and new price", () => {
+  // Bun & Done (sample): burger was $7.00 on 2026-10-15, $8.00 when checked on 2026-10-30.
+  const out = M.priceChanges(data, "2026-11-10", 30);
+  const burger = out.find((x) => x.itemId === "bd-b");
+  assert.ok(burger);
+  assert.equal(burger.from, 7.0);
+  assert.equal(burger.to, 8.0);
+  assert.equal(burger.change, 1.0);
+  assert.equal(burger.pct, 14.3);
+  assert.equal(burger.since, "2026-10-15");
+  assert.equal(burger.seen, "2026-10-30");
+});
+
+test("price changes: checks older than the window, and unchanged prices, are left out", () => {
+  assert.ok(!M.priceChanges(data, "2026-12-15", 30).some((x) => x.itemId === "bd-b"), "checked 46 days earlier");
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.restaurants.find((r) => r.id === "bun-n-done").items[0].history.push({ date: "2026-10-29", direct: 8.0 });
+  assert.ok(!M.priceChanges(copy, "2026-11-10", 30).some((x) => x.itemId === "bd-b"), "newest history matches today");
+});
+
+test("price changes: drops are listed after rises", () => {
+  const copy = JSON.parse(JSON.stringify(data));
+  copy.restaurants.find((r) => r.id === "bun-n-done").items[1].history = [{ date: "2026-10-15", direct: 12.5 }];
+  const out = M.priceChanges(copy, "2026-11-10", 30);
+  const i = out.findIndex((x) => x.itemId === "bd-c");
+  assert.ok(i > out.findIndex((x) => x.itemId === "bd-b"));
+  assert.equal(out[i].change, -1.0);
+});

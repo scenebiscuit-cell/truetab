@@ -601,6 +601,41 @@
     return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
   }
 
+  /*
+   * Restaurant prices that changed between weekly checks, for restaurants checked within `days` of `today`
+   * (both "YYYY-MM-DD"). The old price is the newest entry in the item's history; the new one is today's
+   * price, seen on the restaurant's lastChecked date. Biggest rise first; drops last.
+   */
+  function priceChanges(data, today, days) {
+    const window = typeof days === "number" ? days : 30;
+    const out = [];
+    for (const r of data.restaurants) {
+      if (!r.lastChecked) continue;
+      const age = daysBetween(r.lastChecked, today);
+      if (age < 0 || age > window) continue;
+      for (const item of r.items) {
+        const now = (item.prices || {}).direct;
+        const past = (item.history || []).filter((h) => typeof h.direct === "number" && h.date)
+          .sort((a, b) => (a.date < b.date ? -1 : 1));
+        const last = past[past.length - 1];
+        if (typeof now !== "number" || !last || Math.abs(last.direct - now) < 0.005) continue;
+        out.push({
+          restaurantId: r.id,
+          restaurantName: r.name,
+          itemId: item.id,
+          itemName: item.name,
+          from: last.direct,
+          to: now,
+          change: cents(now - last.direct),
+          pct: Math.round(((now - last.direct) / last.direct) * 1000) / 10,
+          since: last.date,
+          seen: r.lastChecked
+        });
+      }
+    }
+    return out.sort((a, b) => b.pct - a.pct);
+  }
+
   return {
     cents,
     fmtServes,
@@ -624,6 +659,7 @@
     search,
     dealCheck,
     perPortionMedians,
-    compareDish
+    compareDish,
+    priceChanges
   };
 });
