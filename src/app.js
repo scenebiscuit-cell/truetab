@@ -78,7 +78,8 @@
     return wireTabs(tabEls, tabEls.map((t) => $(t.getAttribute("aria-controls"))));
   }
   const showView = wireStaticTabs(document.querySelector('.tabs[role="tablist"]'));
-  document.querySelectorAll('.subtabs[role="tablist"]').forEach(wireStaticTabs);
+  document.querySelectorAll('.subtabs[role="tablist"]:not(.steps)').forEach(wireStaticTabs);
+  const showStep = wireStaticTabs(document.querySelector('.steps[role="tablist"]'));
   $("notice-how").addEventListener("click", (e) => {
     e.preventDefault();
     showView(2, true);
@@ -92,31 +93,28 @@
     sortSel.value = "cheapest";
     sortSel.closest(".field").append(el("p", { class: "help" }, "Best value returns once ratings are added."));
   }
-  /* Cuisine and diet checkboxes. Hidden cuisines are remembered on this device. */
-  const CUISINE_KEY = "truetab-hidden-cuisines";
-  const allCuisines = [...new Set(data.restaurants.flatMap((r) => r.cuisines || []))].sort();
-  let hiddenCuisines = [];
-  try { hiddenCuisines = JSON.parse(localStorage.getItem(CUISINE_KEY) || "[]"); } catch (e) { hiddenCuisines = []; }
-
+  /* Diet checkboxes (a search step: they change which dishes make up each order). */
   function checkbox(name, value, label, checked) {
     return el("label", {}, el("input", { type: "checkbox", name, value, checked: checked ? true : null }), label);
   }
-  const cuisineList = $("cuisine-list");
-  for (const c of allCuisines) cuisineList.append(checkbox("cuisine", c, c, !hiddenCuisines.includes(c)));
   const dietList = $("diet-list");
   for (const [id, label] of Object.entries(data.dietTags || {})) dietList.append(checkbox("diet", id, label, false));
 
-  function saveHidden() {
-    const hidden = [...cuisineList.querySelectorAll("input")].filter((i) => !i.checked).map((i) => i.value);
-    try { localStorage.setItem(CUISINE_KEY, JSON.stringify(hidden)); } catch (e) {}
-  }
-  function setAllCuisines(on) {
-    cuisineList.querySelectorAll("input").forEach((i) => (i.checked = on));
-    saveHidden();
+  /* Cuisine is a filter on the results. Nothing picked = every cuisine; it always starts that way. */
+  const allCuisines = [...new Set(data.restaurants.flatMap((r) => r.cuisines || []))].sort();
+  const pickedCuisines = new Set();
+  try { localStorage.removeItem("truetab-hidden-cuisines"); } catch (e) {} // old remembered choice, no longer used
+
+  /* Steps: Next and Back move between them; Show results works from any step. */
+  let resultsShown = false;
+  document.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => showStep(Number(b.dataset.step), true)));
+  document.querySelectorAll("[data-show]").forEach((b) => b.addEventListener("click", () => {
+    resultsShown = true;
+    $("results-area").hidden = false;
     renderFeed();
-  }
-  $("cuisine-all").addEventListener("click", () => setAllCuisines(true));
-  $("cuisine-none").addEventListener("click", () => setAllCuisines(false));
+    $("results-heading").focus({ preventScroll: true });
+    $("results-area").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }));
 
   /* When: "Right now" uses the visitor's clock; a chosen day shows a time box. */
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -154,7 +152,6 @@
       adults: Math.floor(num("adults", 0)),
       kids: Math.floor(num("kids", 0)),
       mode: $("mode").value,
-      cuisines: checked(cuisineList),
       diet: checked(dietList),
       sort: $("sort").value,
       tipPct: parseFloat($("tip").value),
@@ -167,8 +164,11 @@
   // One line that always shows the settings tucked away in the other search tabs.
   function settingsLine(q) {
     const label = (id) => $(id).selectedOptions[0].textContent.replace(/\s*\(.*\)$/, "");
-    const parts = [label("mode"), $("when-day").value === "now" ? "right now" : `${DAYS[q.when.day]} at ${clock(q.when.minutes)}`];
-    if (q.cuisines.length < allCuisines.length) parts.push(`${q.cuisines.length} of ${allCuisines.length} cuisines`);
+    const parts = [
+      q.budget > 0 ? `up to ${money(q.budget)}` : "no budget limit",
+      [q.adults && `${q.adults} adult${q.adults === 1 ? "" : "s"}`, q.kids && `${q.kids} kid${q.kids === 1 ? "" : "s"}`].filter(Boolean).join(", ") || "nobody yet",
+      label("mode"), $("when-day").value === "now" ? "right now" : `${DAYS[q.when.day]} at ${clock(q.when.minutes)}`];
+    if (q.budgetMin > 0) parts.push(`at least ${money(q.budgetMin)}`);
     if (q.diet.length) parts.push(q.diet.map((d) => data.dietTags[d].toLowerCase()).join(" and ") + " only");
     if (q.dealsOnly) parts.push("deals only");
     parts.push(q.tipPct ? `tip ${label("tip")}` : "no tip", `app markup ${label("markup")}`);
@@ -180,17 +180,46 @@
     return `${h % 12 || 12}:${m} ${h < 12 ? "am" : "pm"}`;
   }
 
+  // Cuisine chips: "All" plus every cuisine, each with how many results it has right now.
+  function cuisineFilter(results) {
+    const count = (c) => results.filter((r) => (r.restaurant.cuisines || []).includes(c)).length;
+    const chip = (label, pressed, onClick, disabled) => el("button", {
+      type: "button", class: "chip", "aria-pressed": String(pressed), disabled: disabled ? true : null
+    }, label);
+    const all = chip(`All (${results.length})`, pickedCuisines.size === 0, null);
+    all.addEventListener("click", () => { pickedCuisines.clear(); renderFeed(); });
+    const chips = allCuisines.map((c) => {
+      const n = count(c);
+      const b = chip(`${c} (${n})`, pickedCuisines.has(c), null, n === 0 && !pickedCuisines.has(c));
+      b.addEventListener("click", () => {
+        if (pickedCuisines.has(c)) pickedCuisines.delete(c); else pickedCuisines.add(c);
+        if (pickedCuisines.size === allCuisines.length) pickedCuisines.clear(); // every one picked = All
+        renderFeed();
+        const again = [...$("cuisine-filter").children].find((x) => x.textContent.startsWith(c + " ("));
+        if (again && !again.disabled) again.focus();
+      });
+      return b;
+    });
+    $("cuisine-filter").replaceChildren(all, ...chips);
+  }
+
   function renderFeed() {
     const q = readQuery();
     settingsLine(q);
+    if (!resultsShown) return;
     const box = $("results");
     box.replaceChildren();
     if (q.adults + q.kids === 0) {
       $("feed-summary").textContent = "";
-      box.append(el("div", { class: "empty" }, el("p", {}, "Add at least one adult or kid to see what fits.")));
+      $("cuisine-filter").replaceChildren();
+      box.append(el("div", { class: "empty" }, el("p", {}, "Add at least one adult or kid (step 1) to see what fits.")));
       return;
     }
-    const out = M.search(data, q);
+    // Search every cuisine, then filter: the chips can show a count for each one.
+    const all = M.search(data, q);
+    cuisineFilter(all.results);
+    const picked = [...pickedCuisines];
+    const out = Object.assign({}, all, { results: picked.length ? all.results.filter((r) => M.cuisineAllowed(r.restaurant, picked)) : all.results });
     const fits = out.results.filter((r) => r.status === "fits").length;
     const who = [q.adults && `${q.adults} adult${q.adults === 1 ? "" : "s"}`, q.kids && `${q.kids} kid${q.kids === 1 ? "" : "s"}`]
       .filter(Boolean).join(" and ");
@@ -200,8 +229,8 @@
     summary.replaceChildren(
       "Feeding ", el("strong", {}, who), ` (${fmt(out.portions)} adult portions). `,
       ...(range
-        ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spots fit ${range} all-in.`]
-        : [`${out.results.length} spots.`]),
+        ? [el("strong", {}, `${fits} of ${out.results.length}`), ` spot${out.results.length === 1 ? "" : "s"} fit${out.results.length === 1 ? "s" : ""} ${range} all-in.`]
+        : [`${out.results.length} spot${out.results.length === 1 ? "" : "s"}.`]),
       out.hiddenBelow ? ` ${out.hiddenBelow} cheaper spot${out.hiddenBelow === 1 ? "" : "s"} hidden by your minimum.` : "",
       out.closedNow ? ` ${out.closedNow} closed then.` : "",
       (() => {
@@ -210,9 +239,8 @@
       })()
     );
     if (!out.results.length) {
-      const why = q.cuisines.length === 0 ? "No cuisines are selected."
-        : q.dealsOnly ? "No deals or buy-one-get-one offers match right now." : "Nothing matches.";
-      box.append(el("div", { class: "empty" }, el("p", {}, `${why} Try more cuisines, a different diet setting, or another way to eat.`)));
+      const why = q.dealsOnly ? "No deals or buy-one-get-one offers match right now." : "Nothing matches.";
+      box.append(el("div", { class: "empty" }, el("p", {}, `${why} Try All cuisines, a different diet setting, or another way to eat.`)));
       return;
     }
     out.results.forEach((r, i) => box.append(card(r, out, q, i === 0 && r.status === "fits", i)));
@@ -387,10 +415,7 @@
     return Number.isInteger(r) ? String(r) : r.toFixed(1);
   }
 
-  $("feed-form").addEventListener("input", (e) => {
-    if (e.target.name === "cuisine") saveHidden();
-    renderFeed();
-  });
+  $("feed-form").addEventListener("input", renderFeed);
   $("feed-form").addEventListener("submit", (e) => e.preventDefault());
   renderFeed();
 

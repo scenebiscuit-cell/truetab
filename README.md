@@ -8,8 +8,8 @@ Created by Nick Lax.
 
 ## Features
 
-- **Feed my group:** budget range (minimum and maximum), adults, kids, how you'll eat (dine-in, pickup, delivery), when, tip. Each restaurant shows its cheapest order that feeds everyone, the cheapest way to get it, cost per person, and a Fits / Just over / Over budget tag.
-- **Cuisine and diet filters:** untick cuisines you never want (remembered on your device); vegetarian, vegan and gluten-free meals built only from items the menu tags that way. Not an allergy guarantee, and the page says so.
+- **Feed my group, step by step:** 1 Budget & group, 2 When & how, 3 Diet, 4 Costs (spend at least, sort, tip, app markup), with Back and Next, and **Show results** on every step so you can search as soon as you've said what matters. Each restaurant shows its cheapest order that feeds everyone, the cheapest way to get it, cost per person, and a Fits / Just over / Over budget tag.
+- **Cuisine filter and diet:** results start with every cuisine; chips above the results (with counts) narrow them, and All brings everything back. Vegetarian, vegan and gluten-free meals are built only from items the menu tags that way. Not an allergy guarantee, and the page says so.
 - **Deals:** set prices, percent off, dollars off and kids eat free, applied only on their days, hours and ways to order. Each card shows the deal and how much it saves.
 - **App price estimator:** DoorDash and Uber Eats menu prices estimated from the restaurant's price plus an adjustable markup (default 20%), then typical fees. Always labeled "est."
 - **Deal check:** every deal is graded Real deal, Small saving or Not worth it, with reasons: savings versus the same order, versus the cheapest way to order without any deal, versus similar dishes nearby, and versus the item's recent prices.
