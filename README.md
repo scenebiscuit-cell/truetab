@@ -53,7 +53,7 @@ npm test
 | `src/report.js` | Restaurant report and weekly post: ranks, app gap, promo check, portions, tested suggestions, post text. No page code |
 | `report.html` | Restaurant report builder (print to PDF) |
 | `post.html` | Weekly "Real Deals" post draft |
-| `src/styles.css` | Styles, from the Nick Lax 2026 Design System |
+| `src/styles.css` | Styles: TrueTab's "guest check" look (see DESIGN.md) |
 | `data/austin-78745.js` | Real 78745 data the page uses |
 | `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
