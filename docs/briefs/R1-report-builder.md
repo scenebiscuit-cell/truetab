@@ -44,10 +44,10 @@ After the merge, create branch `report-builder` from the current `main`.
 
 **Check (how Nick confirms R1 works)**
 
-Open `report.html`, pick **Super Bowl Restaurant**, and print to PDF. The report should:
+Open `report.html`, pick **Bee Dumpling**, and print to PDF. (Updated 2026-11-23: Super Bowl Restaurant, the original example, was replaced by Bee Dumpling, which has no two-for-one items; `npm test` now covers the "Real deal" two-for-one check with a sample spot.) The report should:
 - fit on about 2 pages;
 - show its ranks for 1 adult and a family of 4;
-- show its two-for-one plates graded "Real deal" with the reasons;
+- show its promo check (no specials on file for Bee Dumpling; a two-for-one graded "Real deal" with reasons is covered by `npm test`);
 - show competitors as "Nearby spot A, B…";
 - end with "How this was measured," including the date checked.
 

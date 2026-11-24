@@ -4,7 +4,7 @@
 
 Created by Nick Lax.
 
-> **Status: real data for 78745 (6 restaurants), collected 2026-11-22 from restaurants' own websites and Toast ordering pages.** DoorDash and Uber Eats prices are estimated, not collected. `data/sample-data.js` is fictional and used only by the tests.
+> **Status: real data for 78745 (6 restaurants), collected 2026-11-22 and 2026-11-23 from restaurants' own websites and Toast ordering pages.** DoorDash and Uber Eats prices are estimated, not collected. `data/sample-data.js` is fictional and used only by the tests.
 
 ## Features
 
@@ -55,7 +55,7 @@ npm test
 | `data/sample-data.js` | Fictional sample data for tests |
 | `check.html` | Weekly data checklist |
 | `tests/engine.test.js` | 38 engine tests (sample data) |
-| `tests/real-data.test.js` | 13 checks on the real data |
+| `tests/real-data.test.js` | 14 checks on the real data |
 | `tests/report.test.js` | 12 restaurant report tests (real data) |
 | `docs/DATA.md` | The data format and how to collect real data |
 | `PLAN.md` | Milestones, decisions and the money plan |

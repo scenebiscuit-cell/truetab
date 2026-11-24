@@ -103,17 +103,41 @@ test("with no ratings, results sort by price", () => {
   }
 });
 
-test("Super Bowl's own two-for-one plates are flagged as BOGO", () => {
-  const out = M.search(real, { adults: 2, kids: 2, mode: "pickup" });
-  const sb = out.results.find((x) => x.restaurant.id === "super-bowl");
-  assert.ok(sb.best.bogo);
+// No real 78745 spot has its own two-for-one item right now, so these tests add a made-up "(sample)" spot to a copy of the data.
+function withTwinPlate() {
+  const data = JSON.parse(JSON.stringify(real));
+  data.restaurants.push({
+    id: "twin-plate", name: "Twin Plate (sample)", neighborhood: "Sample", address: "Sample address, Austin, TX 78745",
+    group: "plates", cuisines: ["Chinese"], onApps: [], hours: null, sources: {}, lastChecked: "2026-11-23", rating: null, channelFees: {},
+    items: [
+      { id: "tp-plate", name: "Chicken plate (sample)", dishType: "entree", prices: { direct: 9.49 } },
+      { id: "tp-bogo", promo: "bogo", pairOf: "tp-plate", name: "Chicken plate, 2 orders, buy one get one (sample)", dishType: "meal-for-2",
+        portion: { serves: 2, source: "restaurant" }, prices: { direct: 12.95 } }
+    ]
+  });
+  return data;
+}
+
+test("a restaurant's own two-for-one item is flagged as BOGO", () => {
+  const out = M.search(withTwinPlate(), { adults: 2, kids: 2, mode: "pickup" });
+  const tp = out.results.find((x) => x.restaurant.id === "twin-plate");
+  assert.ok(tp.best.bogo);
 });
 
-test("Super Bowl's two-for-one is checked against buying two singles", () => {
-  const out = M.search(real, { adults: 2, kids: 2, mode: "pickup" });
-  const sb = out.results.find((x) => x.restaurant.id === "super-bowl");
-  const line = sb.best.order.lines.find((l) => l.itemId === "sb-bogo-sesame");
+test("a restaurant's own two-for-one is checked against buying two singles", () => {
+  const out = M.search(withTwinPlate(), { adults: 2, kids: 2, mode: "pickup" });
+  const tp = out.results.find((x) => x.restaurant.id === "twin-plate");
+  const line = tp.best.order.lines.find((l) => l.itemId === "tp-bogo");
   assert.equal(line.promoWas, M.cents(9.49 * 2));
-  assert.ok(sb.best.check.saving > 0);
-  assert.equal(sb.best.check.verdict, "real");
+  assert.ok(tp.best.check.saving > 0);
+  assert.equal(tp.best.check.verdict, "real");
+});
+
+test("Bee Dumpling: open daily, on DoorDash, every portion marked as an estimate", () => {
+  const bd = r("bee-dumpling");
+  assert.ok(M.isOpen(bd, { day: 1, minutes: M.toMinutes("12:00") }));
+  assert.ok(!M.isOpen(bd, { day: 1, minutes: M.toMinutes("23:00") }));
+  assert.ok(M.channelFor(bd, ch("doordash")));
+  assert.equal(M.channelFor(bd, ch("ubereats")), null);
+  for (const i of bd.items) assert.notEqual(M.servesFor(i, real.dishTypes).source, "restaurant", i.id);
 });
