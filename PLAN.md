@@ -60,7 +60,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-22: Family meals that say "feeds 4–6" count as 4 (the low end), with the menu's wording kept in a note.
 - 2026-11-22: Kids-only items (kids' meals) are used one per kid when that's cheaper, and never count toward feeding adults.
 - 2026-11-22: Restaurant-specific charges the menu states are included: Moreno's 3% card surcharge, Evangeline's 40¢ per-item to-go container fee.
-- 2026-11-22: App markup default 20%, based on a 2023 industry study (average app premium about 20%; quick-service 26%, casual dining 11%). Adjustable on the page.
+- 2026-11-22: App markup default 20%, based on a 2023 industry study (average app premium about 20%; quick-service 26%, casual dining 11%). Adjustable on the page (until 2026-11-25; now fixed, see below).
 - 2026-11-22: Ratings aren't stored (Google, Yelp and Tripadvisor terms). "Best value" sorting is hidden until live ratings exist; results sort by price.
 - 2026-11-22: Deal verdict thresholds: "Real deal" needs 10%+ savings with no warning signs; a price rise in the 60 days before the deal, or a deal price above the typical price for similar dishes, drops it to "Small saving"; anything that loses to ordering without a deal is "Not worth it". "Typical" needs at least two items of that dish type.
 - 2026-11-22: Restaurants are hidden when closed at the chosen time; ones without hours on file are shown.
@@ -71,6 +71,7 @@ Help people in Austin find the best meal for their money at any budget, from a $
 - 2026-11-24: Home page redesigned around tabs so less shows at once (Nick's request): page tabs (Feed my group, Compare a dish, How it works), search settings in 4 tabs with an always-visible settings line, and each result card's details in tabs. The hero's small label above the headline was removed.
 - 2026-11-23: Replaced Super Bowl Restaurant with Bee Dumpling (1901 W William Cannon Dr #115) at Nick's choice. Song La (Thicket Food Park, 7800 S 1st St) is a candidate with full prices on its own Square ordering page; held for later.
 - 2026-11-23: Bee Dumpling's 8-piece dumplings and pot stickers count as 1 portion, soup dumplings as 0.75 (estimates; the menu gives piece counts only). Nick to confirm.
+- 2026-11-25: Tip is opt-in. Totals are before tip unless the visitor checks "Add a tip to the totals" (15/18/20%); each result's Price breakdown shows what a usual tip would add. The app markup control is removed from the search: it confused visitors. Apps stay at 20% above the restaurant's prices, explained on each estimated result and in How it works.
 
 ## Making money
 

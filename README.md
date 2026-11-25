@@ -1,6 +1,6 @@
 # TrueTab
 
-**What does your budget actually get you?** TrueTab compares Austin restaurants across dine-in, pickup, the restaurant's own delivery, DoorDash and Uber Eats, using the **all-in price**: menu prices plus delivery fee, service fee, small-order fee, tax and tip. Set a budget range, who you're feeding, when, and what you like, and it finds the best meal for your money at each spot, including any deal running at that time. Cheap lunch or nice dinner: the range decides.
+**What does your budget actually get you?** TrueTab compares Austin restaurants across dine-in, pickup, the restaurant's own delivery, DoorDash and Uber Eats, using the **all-in price**: menu prices plus delivery fee, service fee, small-order fee and tax, plus a tip if you choose to add one. Set a budget range, who you're feeding, when, and what you like, and it finds the best meal for your money at each spot, including any deal running at that time. Cheap lunch or nice dinner: the range decides.
 
 Created by Nick Lax.
 
@@ -8,10 +8,10 @@ Created by Nick Lax.
 
 ## Features
 
-- **Feed my group, step by step:** 1 Budget & group, 2 When & how, 3 Diet, 4 Costs (spend at least, sort, tip, app markup), with Back and Next, and **Show results** on every step so you can search as soon as you've said what matters. Each restaurant shows its cheapest order that feeds everyone, the cheapest way to get it, cost per person, and a Fits / Just over / Over budget tag.
+- **Feed my group, step by step:** 1 Budget & group, 2 When & how, 3 Diet, 4 Costs (spend at least, sort, and an optional "Add a tip to the totals" checkbox), with Back and Next, and **Show results** on every step so you can search as soon as you've said what matters. Each restaurant shows its cheapest order that feeds everyone, the cheapest way to get it, cost per person, and a Fits / Just over / Over budget tag.
 - **Cuisine filter and diet:** results start with every cuisine; chips above the results (with counts) narrow them, and All brings everything back. Vegetarian, vegan and gluten-free meals are built only from items the menu tags that way. Not an allergy guarantee, and the page says so.
 - **Deals:** set prices, percent off, dollars off and kids eat free, applied only on their days, hours and ways to order. Each card shows the deal and how much it saves.
-- **App price estimator:** DoorDash and Uber Eats menu prices estimated from the restaurant's price plus an adjustable markup (default 20%), then typical fees. Always labeled "est."
+- **App price estimator:** DoorDash and Uber Eats menu prices estimated from the restaurant's price plus 20% (set by `defaultMarkupPct` in the data file, explained on each result), then typical fees. Always labeled "est."
 - **Deal check:** every deal is graded Real deal, Small saving or Not worth it, with reasons: savings versus the same order, versus the cheapest way to order without any deal, versus similar dishes nearby, and versus the item's recent prices.
 - **Kids' meals, card surcharges, to-go fees and opening hours** are counted when the menu states them.
 - **Reviews side by side:** links to each restaurant's Google, Yelp and Tripadvisor pages. Live ratings are planned.
@@ -27,7 +27,7 @@ Created by Nick Lax.
 
 ## How the math works
 
-- **All-in price** (`allInPrice` in `src/engine.js`): subtotal + delivery fee + service fee (a percentage with a minimum) + small-order fee (under a threshold) + tax on the food + tip on the food. Pickup has no fees or tip.
+- **All-in price** (`allInPrice` in `src/engine.js`): subtotal + delivery fee + service fee (a percentage with a minimum) + small-order fee (under a threshold) + tax on the food + tip on the food (only when the visitor adds one; otherwise the breakdown shows what a usual tip would add, not counted). Pickup has no fees or tip.
 - **Feeding a group** (`cheapestOrder`): adults count as 1 portion, kids as 0.6. The engine finds the cheapest mix of menu items that covers the group, counting in twelfths of a portion so "3 tacos per adult" and "serves 1.25" both work. Sides and add-ons don't count toward feeding anyone.
 - **Deals** (`activeDeals`, `itemsWithDeals`): the engine prices the order with and without the deals running at that day and time and keeps the cheaper one. Kids eat free removes those kids' portions from what gets bought.
 - **Best value** (`valueScore`): stars above 3, divided by cost per person. A 3-star place adds no value.

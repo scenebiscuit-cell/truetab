@@ -334,3 +334,15 @@ test("price changes: drops are listed after rises", () => {
   assert.ok(i > out.findIndex((x) => x.itemId === "bd-b"));
   assert.equal(out[i].change, -1.0);
 });
+
+test("with no tip added, the price shows what a usual tip would add without counting it", () => {
+  const none = M.allInPrice(20, ch("doordash"), 0, 0);
+  assert.equal(none.tip, 0);
+  assert.equal(none.tipSuggestedPct, 0.18);
+  assert.equal(none.tipIfAdded, 3.6);
+  assert.equal(Math.round(none.total * 100), Math.round((none.subtotal + none.fees) * 100), "not in the total");
+  const added = M.allInPrice(20, ch("doordash"), 0, 0.18);
+  assert.equal(added.tip, 3.6);
+  assert.equal(added.tipIfAdded, 0, "already counted");
+  assert.equal(M.allInPrice(20, ch("pickup"), 0, 0).tipIfAdded, 0, "pickup has no tip");
+});
