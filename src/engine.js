@@ -55,6 +55,9 @@
     parts.toGoFee = cents(x.toGoFee ? x.toGoFee * (x.itemCount || 0) : 0);
     parts.fees = cents(parts.deliveryFee + parts.serviceFee + parts.smallOrderFee + parts.cardSurcharge + parts.toGoFee);
     parts.total = cents(parts.subtotal + parts.fees + parts.tax + parts.tip);
+    // When no tip is added, what the usual tip for this way of ordering would be (shown, never counted).
+    parts.tipSuggestedPct = !parts.tip && channel.defaultTipPct ? channel.defaultTipPct : 0;
+    parts.tipIfAdded = cents(subtotal * parts.tipSuggestedPct);
     return parts;
   }
 

@@ -145,6 +145,8 @@
       const v = parseFloat($(id).value);
       return Number.isFinite(v) && v >= 0 ? v : fallback;
     };
+    const addTip = $("add-tip").checked;
+    $("tip-field").hidden = !addTip; // the tip percentage only shows once a tip is added
     const checked = (list) => [...list.querySelectorAll("input:checked")].map((i) => i.value);
     return {
       budgetMin: num("budget-min", 0),
@@ -154,8 +156,7 @@
       mode: $("mode").value,
       diet: checked(dietList),
       sort: $("sort").value,
-      tipPct: parseFloat($("tip").value),
-      markupPct: parseFloat($("markup").value),
+      tipPct: addTip ? parseFloat($("tip").value) : 0,
       dealsOnly: $("deals-only").checked,
       when: readWhen()
     };
@@ -171,7 +172,7 @@
     if (q.budgetMin > 0) parts.push(`at least ${money(q.budgetMin)}`);
     if (q.diet.length) parts.push(q.diet.map((d) => data.dietTags[d].toLowerCase()).join(" and ") + " only");
     if (q.dealsOnly) parts.push("deals only");
-    parts.push(q.tipPct ? `tip ${label("tip")}` : "no tip", `app markup ${label("markup")}`);
+    parts.push(q.tipPct ? `${label("tip")} tip added` : "before tip");
     $("settings-line").replaceChildren(el("strong", {}, "Search settings: "), parts.join(" · "));
   }
   function clock(minutes) {
@@ -280,8 +281,11 @@
           el("tr", { class: "total" }, el("td", {}, "Estimated total"), el("td", {}, money(p.total)))
         )
       ),
+      p.tipIfAdded
+        ? el("p", { class: "help" }, `Before tip. A usual ${Math.round(p.tipSuggestedPct * 100)}% tip would add about ${money(p.tipIfAdded)}. To count it, turn on "Add a tip" in step 4, Costs.`)
+        : null,
       b.estimated
-        ? el("p", { class: "help" }, `${b.channelLabel} menu prices are estimated at ${Math.round(b.markupPct * 100)}% above the restaurant's own prices. Fees are typical values, not a quote.`)
+        ? el("p", { class: "help" }, `${b.channelLabel} doesn't publish this restaurant's menu prices, so they're estimated at ${Math.round(b.markupPct * 100)}% above the restaurant's own prices (apps usually charge more). Fees are typical values, not a quote.`)
         : null
     ];
     const channels = el("table", { class: "channels" },

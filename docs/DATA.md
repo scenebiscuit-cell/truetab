@@ -25,7 +25,7 @@ All data lives in one file loaded by the page (`data/sample-data.js` now; `data/
 ```
 
 - `priceKey` says which menu price to use: `direct` (the restaurant's own price) or the app's.
-- `kind` is `pickup`, `dine-in` or `delivery`. Pickup never has a tip; dine-in and delivery use the tip setting.
+- `kind` is `pickup`, `dine-in` or `delivery`. Pickup never has a tip; dine-in and delivery add a tip only when the visitor turns on "Add a tip"; otherwise `defaultTipPct` is used to show what a usual tip would add.
 - `requiresOptIn: true` means a restaurant only has this channel if it says `available: true` (used for the restaurant's own delivery).
 - A restaurant can override any fee in `channelFees`, or turn a channel off with `available: false`.
 

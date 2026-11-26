@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Courier+Prime:wght@400;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
-  <link rel="stylesheet" href="src/styles.css?v=2026-11-24h">
+  <link rel="stylesheet" href="src/styles.css?v=2026-11-25">
   <script>
     // Pick the theme before the page paints, so it never flashes the wrong one.
     (function () {
@@ -32,7 +32,7 @@
   <main id="main">
     <section class="hero wrap">
       <h1>What does your budget <span class="mark">actually</span> get you?</h1>
-      <p class="lead">Set a budget and who you're feeding. TrueTab finds the cheapest way to feed everyone at each spot in Austin 78745, with fees, tax and tip already counted.</p>
+      <p class="lead">Set a budget and who you're feeding. TrueTab finds the cheapest way to feed everyone at each spot in Austin 78745, with fees and tax already counted. Add a tip if you like.</p>
       <p class="notice" role="note" id="data-notice">Real menu prices from each restaurant, checked Nov 22–23, 2026. DoorDash and Uber Eats prices are <strong>estimated</strong>. <a href="#view-how" id="notice-how">How the numbers work</a></p>
     </section>
 
@@ -59,7 +59,7 @@
             <div class="field">
               <label for="budget">Spend up to</label>
               <div class="money"><span aria-hidden="true">$</span><input id="budget" name="budget" type="number" inputmode="decimal" min="0" step="1" value="40"></div>
-              <p class="help">All-in. 0 means no limit.</p>
+              <p class="help">Food, fees and tax, plus tip if you add one. 0 means no limit.</p>
             </div>
             <div class="field">
               <label for="adults">Adults</label>
@@ -148,27 +148,18 @@
                 <option value="cheapest">Cheapest</option>
               </select>
             </div>
-            <div class="field">
+            <div class="field wide">
+              <label class="inline-check"><input type="checkbox" id="add-tip" name="addTip"> Add a tip to the totals</label>
+              <p class="help">Off: totals are before tip, and each spot's Price breakdown shows what a usual tip would add. Pickup never has a tip.</p>
+            </div>
+            <div class="field" id="tip-field" hidden>
               <label for="tip">Tip</label>
               <select id="tip" name="tip">
                 <option value="0.15">15%</option>
                 <option value="0.18" selected>18%</option>
                 <option value="0.2">20%</option>
-                <option value="0">No tip</option>
               </select>
-              <p class="help">Dine-in and delivery. Pickup has none.</p>
-            </div>
-            <div class="field">
-              <label for="markup">App menu markup</label>
-              <select id="markup" name="markup">
-                <option value="0">0% (same as restaurant)</option>
-                <option value="0.1">10%</option>
-                <option value="0.15">15%</option>
-                <option value="0.2" selected>20% (typical)</option>
-                <option value="0.25">25%</option>
-                <option value="0.3">30%</option>
-              </select>
-              <p class="help">How much higher DoorDash and Uber Eats menu prices are assumed to be.</p>
+              <p class="help">For dine-in and delivery.</p>
             </div>
           </div>
           <div class="step-actions">
@@ -225,9 +216,9 @@
       </div>
       <div class="subpanel" id="hp-prices" role="tabpanel" aria-labelledby="ht-prices" tabindex="0">
         <ul>
-          <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax + tip. Pickup has no fees or tip.</li>
+          <li><strong>All-in price</strong> = menu prices + delivery fee + service fee + small-order fee + tax, plus a tip only if you add one in step 4 (otherwise each result shows what a usual tip would add). Pickup has no fees or tip.</li>
           <li><strong>Restaurant prices are real</strong>, copied by hand from each restaurant's own website or ordering page on Nov 22–23, 2026. Restaurant-specific charges, like a card surcharge or a to-go container fee, are included when the menu states them. Check the restaurant before you go.</li>
-          <li><strong>App prices are estimates.</strong> DoorDash and Uber Eats prices aren't collected. Restaurants often price items higher on the apps; an industry study put the average near 20%. TrueTab adds your chosen markup and typical fees. Real fees change with distance, time and promotions.</li>
+          <li><strong>App prices are estimates.</strong> DoorDash and Uber Eats prices aren't collected. Restaurants often price items higher on the apps; an industry study put the average near 20%. TrueTab adds 20% to the restaurant's own prices, then typical fees. Real fees change with distance, time and promotions.</li>
         </ul>
       </div>
       <div class="subpanel" id="hp-portions" role="tabpanel" aria-labelledby="ht-portions" tabindex="0" hidden>
@@ -259,8 +250,8 @@
     </div>
   </footer>
 
-  <script src="data/austin-78745.js?v=2026-11-24h"></script>
-  <script src="src/engine.js?v=2026-11-24h"></script>
-  <script src="src/app.js?v=2026-11-24h"></script>
+  <script src="data/austin-78745.js?v=2026-11-25"></script>
+  <script src="src/engine.js?v=2026-11-25"></script>
+  <script src="src/app.js?v=2026-11-25"></script>
 </body>
 </html>
